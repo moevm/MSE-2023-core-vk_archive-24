@@ -16,3 +16,13 @@ fun chooseDirection(): File? {
     println(result?.absolutePath ?: "")
     return result
 }
+
+fun findFolder(startDir: File, folderName: String): File? {
+    val fileTree = startDir.walk()
+    for (file in fileTree) {
+        if (file.isDirectory && file.name == folderName) {
+            return file
+        }
+    }
+    return null
+}
