@@ -17,8 +17,12 @@ class MainWindowViewModel {
         currentDirectory.value = direction?.absolutePath ?: "Please, choose VK Archive folder"
         currentFolder.value = direction
 
+        println(goThroughMessages()) //тест для папки Messages в архиве
+
+
         //тест функции поиска имени (потом удалить)
         println(getFriendUserName("-15365973"))
+
     }
 
     fun showAboutAlertDialog() {
@@ -28,6 +32,37 @@ class MainWindowViewModel {
     fun hideAboutAlertDialog() {
         isShowAboutAlertDialog.value = false
     }
+
+
+    fun goThroughDialogue(dialogueFolder: File): Int{
+        //пока тут просто счетчик для проверки прохода по всем файлам
+        var counter = 0
+        val fileTree = dialogueFolder.walk()
+        for (file in fileTree) {
+            if(file == dialogueFolder) continue
+            // TODO() парсер на файл
+            counter += 1
+        }
+        return counter
+    }
+
+    fun goThroughMessages(): MutableList<String?>{
+        //вовзвращаем список обработанных диалогов
+        val fileNames = mutableListOf<String?>()
+        var counter = 0
+        val archiveFolder = File(currentDirectory.value).toString()
+        val messagesFolder = File("$archiveFolder/messages").listFiles()
+        if (messagesFolder != null){
+            for (dialogue in messagesFolder) {
+                if(dialogue.isDirectory){
+                    fileNames.add(dialogue.name)
+                    counter += goThroughDialogue(dialogue)
+                }
+            }
+            println(counter)
+        }
+        return fileNames
+        }
 
     // поиск имени по id (потом вынести из viewModel)
     fun getFriendUserName(id: String): String? {
@@ -45,5 +80,6 @@ class MainWindowViewModel {
             }
         }
         return null
+
     }
 }
