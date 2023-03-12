@@ -8,5 +8,5 @@ data class Message(
         val messageTime:Date,
         val editTime:Date? = null,
         val message:String? = null,
-        val attachments:MutableList<Attachment> = mutableListOf()
+        val attachments:List<Attachment> = listOf()
 )
