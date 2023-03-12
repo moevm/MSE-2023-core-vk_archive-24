@@ -62,6 +62,7 @@ class MainWindowViewModel {
             println(counter)
         }
         return fileNames
+        }
 
     // поиск имени по id (потом вынести из viewModel)
     fun getFriendUserName(id: String): String? {
