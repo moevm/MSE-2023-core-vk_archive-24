@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Button
+import androidx.compose.material.Divider
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import ui.aboutAlertDialog.AboutAlertDialog
+import ui.dialogItem.DialogItemBefore
 import java.io.File
 
 @Composable
@@ -56,8 +58,9 @@ fun MainWindow() {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp,)
             )
-            ListOfFolders(
-                folderState,
+            ListOfDialogs(
+                folderState.value?.listFiles()
+                    ?.map { viewModel.getFriendUserName(it.name) ?: it.name } ?: listOf(),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -110,8 +113,8 @@ fun ChosenFolderContent(
 }
 
 @Composable
-fun ListOfFolders(
-    direction: MutableState<File?>,
+fun ListOfDialogs(
+    dialogs: List<String>,
     modifier: Modifier = Modifier
 ) {
     val lazyColumnState = rememberLazyListState()
@@ -131,16 +134,23 @@ fun ListOfFolders(
             verticalArrangement = Arrangement.spacedBy(6.dp)
 
         ) {
-            fillFilesList(direction)
+            fillDialogList(dialogs)
         }
     }
 }
 
-private fun LazyListScope.fillFilesList(direction: MutableState<File?>) {
-    val listOfFiles =
-        (direction.value?.listFiles() ?: arrayOf()).sorted()
-    for (folder in listOfFiles) {
-        item { Text(folder.name) }
+private fun LazyListScope.fillDialogList(dialogs: List<String>) {
+    for (dialogTitle in dialogs) {
+        item {
+            DialogItemBefore(
+                title = dialogTitle,
+                onParsingClick = {},
+                modifier = Modifier
+                    .height(40.dp)
+                    .fillMaxWidth()
+            )
+            Divider(Modifier.fillMaxWidth())
+        }
     }
 }
 
