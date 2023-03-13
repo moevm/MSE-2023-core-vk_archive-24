@@ -10,9 +10,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,7 +25,7 @@ import data.mockObject.FakeDialog
 import ui.aboutAlertDialog.AboutAlertDialog
 import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
-import java.io.File
+import windowManager.WindowsManager
 
 @Composable
 @Preview
@@ -35,10 +33,10 @@ fun MainWindow() {
     val viewModel = MainWindowViewModel()
 
     val chosenFolderState = remember { viewModel.currentDirectory }
-    val folderState: MutableState<File?> = remember { viewModel.currentFolder }
     val aboutAlertDialogState: MutableState<Boolean> =
         remember { viewModel.isShowAboutAlertDialog }
     val preparedDialogs = remember { viewModel.preparedDialogs }
+    val currentDialogId = remember { viewModel.currentDialogId }
 
     Scaffold(
         topBar = {
@@ -51,20 +49,30 @@ fun MainWindow() {
         if (aboutAlertDialogState.value)
             AboutAlertDialog { viewModel.hideAboutAlertDialog() }
 
+        if (currentDialogId.value != null) {
+            WindowsManager.prepareDialogWindow(
+                id = currentDialogId.value ?: "error id",
+                onExitClick = {
+                    currentDialogId.value = null
+                })
+        }
+
         Column {
             ChosenFolderContent(
                 chosenFolderState,
-                onChooseFolderClick = { viewModel.chooseFolder() },
+                onChooseFolderClick = {
+                    viewModel.chooseFolder()
+                    viewModel.prepareDialogsList()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp,)
             )
             ListOfDialogs(
-                folderState.value?.listFiles()
-                    ?.map { viewModel.getFriendUserName(it.name) ?: it.name } ?: listOf(),
+                viewModel.currentDialogs,
                 preparedDialogs,
                 onDialogParsingClick = { viewModel.loadAllPreparedDialogs() },
-                onPreparedDialogClick = { id ->  },
+                onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 16.dp)

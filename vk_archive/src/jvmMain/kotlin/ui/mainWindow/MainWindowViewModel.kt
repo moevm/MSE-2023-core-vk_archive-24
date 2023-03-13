@@ -12,9 +12,13 @@ import java.nio.charset.Charset
 
 class MainWindowViewModel {
     val currentDirectory = mutableStateOf("Please, choose VK Archive folder")
-    val currentFolder: MutableState<File?> = mutableStateOf(null)
-    val isShowAboutAlertDialog = mutableStateOf(false)
+    private val currentFolder: MutableState<File?> = mutableStateOf(null)
+    var currentDialogs = mutableStateListOf<String>()
     val preparedDialogs = mutableStateListOf<FakeDialog>()
+
+    val isShowAboutAlertDialog = mutableStateOf(false)
+
+    var currentDialogId = mutableStateOf<String?>(null)
 
     fun chooseFolder() {
         val direction = chooseDirection()
@@ -23,6 +27,14 @@ class MainWindowViewModel {
 
         //тест функции поиска имени (потом удалить)
         println(getFriendUserName("-15365973"))
+    }
+
+    fun prepareDialogsList(): List<String> {
+        currentDialogs.clear()
+        currentDialogs.addAll(currentFolder.value?.listFiles()
+            ?.map { getFriendUserName(it.name) ?: it.name }
+            ?: listOf())
+        return currentDialogs
     }
 
     fun showAboutAlertDialog() {
