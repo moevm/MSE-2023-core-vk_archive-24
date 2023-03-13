@@ -1,7 +1,10 @@
 package ui.mainWindow
 
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import data.getFakeDialogs
+import data.mockObject.FakeDialog
 import utils.chooseDirection
 import utils.findFolder
 import java.io.File
@@ -9,8 +12,13 @@ import java.nio.charset.Charset
 
 class MainWindowViewModel {
     val currentDirectory = mutableStateOf("Please, choose VK Archive folder")
-    val currentFolder: MutableState<File?> = mutableStateOf(null)
+    private val currentFolder: MutableState<File?> = mutableStateOf(null)
+    var currentDialogs = mutableStateListOf<String>()
+    val preparedDialogs = mutableStateListOf<FakeDialog>()
+
     val isShowAboutAlertDialog = mutableStateOf(false)
+
+    var currentDialogId = mutableStateOf<String?>(null)
 
     fun chooseFolder() {
         val direction = chooseDirection()
@@ -21,12 +29,31 @@ class MainWindowViewModel {
         println(getFriendUserName("-15365973"))
     }
 
+    fun prepareDialogsList(): List<String> {
+        currentDialogs.clear()
+        currentDialogs.addAll(currentFolder.value?.listFiles()
+            ?.map { getFriendUserName(it.name) ?: it.name }
+            ?: listOf())
+        return currentDialogs
+    }
+
     fun showAboutAlertDialog() {
         isShowAboutAlertDialog.value = true
     }
 
     fun hideAboutAlertDialog() {
         isShowAboutAlertDialog.value = false
+    }
+
+    fun tryLoadAllPreparedDialogs() {
+        if (currentFolder.value != null) {
+            loadAllPreparedDialogs()
+        }
+    }
+
+    fun loadAllPreparedDialogs() {
+        preparedDialogs.clear()
+        preparedDialogs.addAll(getFakeDialogs().shuffled())
     }
 
     // поиск имени по id (потом вынести из viewModel)
