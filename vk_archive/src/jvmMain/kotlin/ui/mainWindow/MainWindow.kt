@@ -10,9 +10,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,9 +21,11 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import data.mockObject.FakeDialog
 import ui.aboutAlertDialog.AboutAlertDialog
+import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
-import java.io.File
+import windowManager.WindowsManager
 
 @Composable
 @Preview
@@ -33,34 +33,46 @@ fun MainWindow() {
     val viewModel = MainWindowViewModel()
 
     val chosenFolderState = remember { viewModel.currentDirectory }
-    val folderState: MutableState<File?> = remember { viewModel.currentFolder }
     val aboutAlertDialogState: MutableState<Boolean> =
         remember { viewModel.isShowAboutAlertDialog }
+    val preparedDialogs = remember { viewModel.preparedDialogs }
+    val currentDialogId = remember { viewModel.currentDialogId }
 
     Scaffold(
         topBar = {
             MainWindowTopBar(
-                onClickAboutButton = { viewModel.showAboutAlertDialog() }
+                onClickAboutButton = { viewModel.showAboutAlertDialog() },
+                onClickParsingAllButton = { viewModel.tryLoadAllPreparedDialogs() }
             )
         }
     ) {
         if (aboutAlertDialogState.value)
             AboutAlertDialog { viewModel.hideAboutAlertDialog() }
 
-        Column(
-            modifier = Modifier
-                .width(700.dp)
-        ) {
+        if (currentDialogId.value != null) {
+            WindowsManager.prepareDialogWindow(
+                id = currentDialogId.value ?: "error id",
+                onExitClick = {
+                    currentDialogId.value = null
+                })
+        }
+
+        Column {
             ChosenFolderContent(
                 chosenFolderState,
-                onChooseFolderClick = { viewModel.chooseFolder() },
+                onChooseFolderClick = {
+                    viewModel.chooseFolder()
+                    viewModel.prepareDialogsList()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp,)
             )
             ListOfDialogs(
-                folderState.value?.listFiles()
-                    ?.map { viewModel.getFriendUserName(it.name) ?: it.name } ?: listOf(),
+                viewModel.currentDialogs,
+                preparedDialogs,
+                onDialogParsingClick = { viewModel.loadAllPreparedDialogs() },
+                onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -115,36 +127,67 @@ fun ChosenFolderContent(
 @Composable
 fun ListOfDialogs(
     dialogs: List<String>,
+    preparedDialogs: List<FakeDialog>,
+    onDialogParsingClick: () -> Unit,
+    onPreparedDialogClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val lazyColumnState = rememberLazyListState()
+    val lazyColumnDialogBeforeState = rememberLazyListState()
+    val lazyColumnDialogAfterState = rememberLazyListState()
 
-    Box(
-        modifier = modifier
-            .border(
-                width = 3.dp,
-                color = Color.Gray
-            )
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        LazyColumn(
-            state = lazyColumnState,
+        Box(
             modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-
+                .weight(50f)
+                .border(
+                    width = 3.dp,
+                    color = Color.Gray
+                )
         ) {
-            fillDialogList(dialogs)
+            LazyColumn(
+                state = lazyColumnDialogBeforeState,
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                fillDialogBeforeList(dialogs, onDialogParsingClick)
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(50f)
+                .border(
+                    width = 3.dp,
+                    color = Color.Green
+                )
+        ) {
+            LazyColumn(
+                state = lazyColumnDialogAfterState,
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
+            }
         }
     }
 }
 
-private fun LazyListScope.fillDialogList(dialogs: List<String>) {
+private fun LazyListScope.fillDialogBeforeList(
+    dialogs: List<String>,
+    onDialogParsingClick: () -> Unit
+) {
     for (dialogTitle in dialogs) {
         item {
             DialogItemBefore(
                 title = dialogTitle,
-                onParsingClick = {},
+                onParsingClick = onDialogParsingClick,
                 modifier = Modifier
                     .height(40.dp)
                     .fillMaxWidth()
@@ -154,5 +197,21 @@ private fun LazyListScope.fillDialogList(dialogs: List<String>) {
     }
 }
 
-
-
+private fun LazyListScope.fillDialogAfterList(
+    dialogs: List<FakeDialog>,
+    onPreparedDialogClick: (String) -> Unit
+) {
+    for (dialog in dialogs) {
+        item {
+            DialogItemAfter(
+                dialog.id,
+                dialog.name,
+                dialog.amountMessages,
+                dialog.amountAttachments,
+                { onPreparedDialogClick(dialog.id) },
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        }
+    }
+}
