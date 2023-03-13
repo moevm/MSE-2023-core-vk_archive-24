@@ -43,7 +43,8 @@ fun MainWindow() {
     Scaffold(
         topBar = {
             MainWindowTopBar(
-                onClickAboutButton = { viewModel.showAboutAlertDialog() }
+                onClickAboutButton = { viewModel.showAboutAlertDialog() },
+                onClickParsingAllButton = { viewModel.tryLoadAllPreparedDialogs() }
             )
         }
     ) {

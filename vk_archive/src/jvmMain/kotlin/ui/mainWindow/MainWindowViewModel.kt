@@ -33,6 +33,12 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
+    fun tryLoadAllPreparedDialogs() {
+        if (currentFolder.value != null) {
+            loadAllPreparedDialogs()
+        }
+    }
+
     fun loadAllPreparedDialogs() {
         preparedDialogs.clear()
         preparedDialogs.addAll(getFakeDialogs().shuffled())

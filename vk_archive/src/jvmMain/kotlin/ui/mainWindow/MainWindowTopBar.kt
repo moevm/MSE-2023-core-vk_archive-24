@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 @Preview
 fun MainWindowTopBar(
     onClickAboutButton: () -> Unit,
+    onClickParsingAllButton: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
@@ -24,6 +25,9 @@ fun MainWindowTopBar(
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(onClick = onClickAboutButton) {
                 Text("About")
+            }
+            Button(onClick = onClickParsingAllButton) {
+                Text("Parsing all")
             }
         }
     }
