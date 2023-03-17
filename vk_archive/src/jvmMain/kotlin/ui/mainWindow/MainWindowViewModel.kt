@@ -32,7 +32,7 @@ class MainWindowViewModel {
     fun prepareDialogsList(): List<String> {
         currentDialogs.clear()
         currentDialogs.addAll(currentFolder.value?.listFiles()
-            ?.map { getFriendUserName(it.name) ?: it.name }
+            ?.mapNotNull { getFriendUserName(it.name) }
             ?: listOf())
         return currentDialogs
     }
