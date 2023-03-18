@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import data.getFakeDialogs
 import data.mockObject.FakeDialog
 import utils.chooseDirection
-import utils.sortFilesByNum
 import utils.getUsersNameIdList
+import utils.goThroughDialogue
 import java.io.File
 
 class MainWindowViewModel {
@@ -44,20 +44,8 @@ class MainWindowViewModel {
     }
 
     //я все перенесу, я помню
-    fun goThroughDialogue(dialogueFolder: File): Int{
-        //пока тут просто счетчик для проверки прохода по всем файлам
-        var counter = 0
-        val fileList = sortFilesByNum(dialogueFolder)
-        for (item in fileList) {
-            if(item == dialogueFolder) continue
-            // TODO() парсер на файл
-            counter ++
-        }
-        return counter
-    }
-
     fun goThroughMessages(): MutableList<String?>{
-        //возввращаем список обработанных диалогов
+        //возвращаем список обработанных диалогов
         val fileNames = mutableListOf<String?>()
         var counter = 0
         val archiveFolder = File(currentDirectory.value).toString()

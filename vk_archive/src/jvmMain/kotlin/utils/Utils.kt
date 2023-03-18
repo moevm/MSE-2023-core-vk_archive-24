@@ -29,6 +29,7 @@ fun findFolder(startDir: File, folderName: String): File? {
     return null
 }
 
+//сортировка файлов по убыванию числа в названии
 fun sortFilesByNum(currentFolder: File): MutableList<File> {
     val filesList = mutableListOf<File>()
     val filesNames = mutableListOf<String>()
@@ -38,6 +39,19 @@ fun sortFilesByNum(currentFolder: File): MutableList<File> {
         filesList.add(File("$currentFolder/$name"))
     }
     return filesList
+}
+
+//обработка файлов в диалоге
+fun goThroughDialogue(dialogueFolder: File): Int{
+    var counter = 0
+    val fileList = sortFilesByNum(dialogueFolder)
+    for (item in fileList) {
+        if(item == dialogueFolder) continue
+        // TODO() парсер на файл
+        counter ++
+    }
+    return counter
+}
 
 // список id и имен
 fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
