@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import utils.chooseDirection
 import utils.findFolder
+import utils.sortFilesByNum
 import java.io.File
 import java.nio.charset.Charset
 
@@ -33,21 +34,21 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
-
+    //я все перенесу, я помню
     fun goThroughDialogue(dialogueFolder: File): Int{
         //пока тут просто счетчик для проверки прохода по всем файлам
         var counter = 0
-        val fileTree = dialogueFolder.walk()
-        for (file in fileTree) {
-            if(file == dialogueFolder) continue
+        val fileList = sortFilesByNum(dialogueFolder)
+        for (item in fileList) {
+            if(item == dialogueFolder) continue
             // TODO() парсер на файл
-            counter += 1
+            counter ++
         }
         return counter
     }
 
     fun goThroughMessages(): MutableList<String?>{
-        //вовзвращаем список обработанных диалогов
+        //возввращаем список обработанных диалогов
         val fileNames = mutableListOf<String?>()
         var counter = 0
         val archiveFolder = File(currentDirectory.value).toString()
@@ -62,7 +63,7 @@ class MainWindowViewModel {
             println(counter)
         }
         return fileNames
-        }
+    }
 
     // поиск имени по id (потом вынести из viewModel)
     fun getFriendUserName(id: String): String? {
@@ -80,6 +81,5 @@ class MainWindowViewModel {
             }
         }
         return null
-
     }
 }

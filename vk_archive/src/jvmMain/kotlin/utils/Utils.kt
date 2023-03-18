@@ -26,3 +26,14 @@ fun findFolder(startDir: File, folderName: String): File? {
     }
     return null
 }
+
+fun sortFilesByNum(currentFolder: File): MutableList<File> {
+    val filesList = mutableListOf<File>()
+    val filesNames = mutableListOf<String>()
+    currentFolder.list().forEach { filesNames.add(it) }
+    filesNames.sortByDescending { s -> s.filter { it.isDigit() }.toInt() }
+    for (name in filesNames) {
+        filesList.add(File("$currentFolder/$name"))
+    }
+    return filesList
+}
