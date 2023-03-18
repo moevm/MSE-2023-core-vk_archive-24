@@ -34,14 +34,6 @@ class MainWindowViewModel {
         return currentDialogs
     }
 
-    fun prepareDialogsList(): List<String> {
-        currentDialogs.clear()
-        currentDialogs.addAll(currentFolder.value?.listFiles()
-            ?.map { getFriendUserName(it.name) ?: it.name }
-            ?: listOf())
-        return currentDialogs
-    }
-
     fun showAboutAlertDialog() {
         isShowAboutAlertDialog.value = true
     }
