@@ -1,9 +1,11 @@
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
+    java
 }
 
 group = "ru.mse"
@@ -38,5 +40,58 @@ compose.desktop {
             packageName = "vk_archive"
             packageVersion = "1.0.0"
         }
+    }
+}
+
+/**
+ * build: ./gradlew buildAllJars - build jars for all platforms
+ *        ./gradlew buildJarWindows - build jar for Windows
+ *        ./gradlew buildJarLinux - build jar for Linux
+ *        ./gradlew buildJarMacOs - build jar for Mac-os
+ * run jar: (из папки /build/libs) java -jar vk_archive-1.0.0-{your OS}}.jar
+ */
+tasks {
+    register<Jar>("buildJarWindows") {
+        group = "jarBuild"
+        archiveClassifier.set("windows")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes["Main-Class"] = "app.AppKt"
+        }
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+        from(sourceSets.main.get().output)
+        enabled = true
+    }
+
+    register<Jar>("buildJarLinux") {
+        group = "jarBuild"
+        archiveClassifier.set("linux")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes["Main-Class"] = "app.AppKt"
+        }
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+        from(sourceSets.main.get().output)
+        enabled = true
+    }
+
+    register<Jar>("buildJarMacOs") {
+        group = "jarBuild"
+        archiveClassifier.set("macos")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes["Main-Class"] = "app.AppKt"
+        }
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+        from(sourceSets.main.get().output)
+        enabled = true
+    }
+
+    register("buildAllJars") {
+        dependsOn("buildJarWindows", "buildJarLinux", "buildJarMacOs")
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
     }
 }

@@ -1,9 +1,11 @@
 package utils
 
 import java.awt.image.BufferedImage
-import java.io.File
 import java.net.URL
 import javax.imageio.ImageIO
+import data.UsersNameId
+import java.io.File
+import java.nio.charset.Charset
 import javax.swing.JFileChooser
 
 // TODO: Удалить временное решение после добавления готового
@@ -31,7 +33,7 @@ fun findFolder(startDir: File, folderName: String): File? {
 }
 
 //загрузка и сохранение изображения по ссылке
-fun downloadImage(imageUrl: String, filePath: String) {
+fun downloadImageJPG(imageUrl: String, filePath: String) {
     val url = URL(imageUrl)
     val connection = url.openConnection()
     connection.connect()
@@ -43,13 +45,31 @@ fun downloadImage(imageUrl: String, filePath: String) {
 }
 
 //Создание копии изображения в меньшем разрешении
-fun reduceImageResolution(filePath: String, outputPath: String) {
+fun reduceImageResolution(filePath: String, outputPath: String, newWidth: Int, newHeight: Int) {
     val inputImage = ImageIO.read(File(filePath))
-    val newWidth = inputImage.getWidth(null)/4
-    val newHeight = inputImage.getHeight(null)/4
     val outputImage = BufferedImage(newWidth, newHeight, inputImage.type)
     val graphics = outputImage.createGraphics()
     graphics.drawImage(inputImage, 0, 0, newWidth, newHeight, null)
     graphics.dispose()
     ImageIO.write(outputImage, "jpg", File(outputPath))
+}
+
+// список id и имен
+fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
+    val messagesDirectory = File(directoryPath, "messages")
+    val indexFile = File(messagesDirectory, "index-messages.html")
+    val usersNameIdList = mutableListOf<UsersNameId>()
+
+    if (indexFile.exists()) {
+        val htmlText = indexFile.readText(charset = Charset.forName("windows-1251"))
+        val regex = """<div class="message-peer--id">\s+<a href="(-?\d+)/messages0.html">([^<]+)</a>""".toRegex()
+        val matches = regex.findAll(htmlText)
+
+        for (match in matches) {
+            val (id, name) = match.destructured
+            usersNameIdList.add(UsersNameId(id, name))
+        }
+    }
+    else return null
+    return usersNameIdList
 }
