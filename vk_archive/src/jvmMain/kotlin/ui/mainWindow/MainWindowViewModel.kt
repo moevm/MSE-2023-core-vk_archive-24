@@ -2,8 +2,7 @@ package ui.mainWindow
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import utils.chooseDirection
-import utils.findFolder
+import utils.*
 import java.io.File
 import java.nio.charset.Charset
 
@@ -16,6 +15,10 @@ class MainWindowViewModel {
         val direction = chooseDirection()
         currentDirectory.value = direction?.absolutePath ?: "Please, choose VK Archive folder"
         currentFolder.value = direction
+
+        //тест для загрузки изображения и получения его превью
+        downloadImage("link", "../img.jpg")
+        reduceImageResolution("../img.jpg", "../img_copy.jpg")
 
         //тест функции поиска имени (потом удалить)
         println(getFriendUserName("-15365973"))
