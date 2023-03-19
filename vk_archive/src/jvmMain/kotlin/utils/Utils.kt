@@ -29,6 +29,29 @@ fun findFolder(startDir: File, folderName: String): File? {
     return null
 }
 
+//сортировка файлов по убыванию числа в названии
+fun sortFilesByNum(currentFolder: File): MutableList<File> {
+    val filesList = mutableListOf<File>()
+    val filesNames = mutableListOf<String>()
+    currentFolder.list().forEach { filesNames.add(it) }
+    filesNames.sortByDescending { s -> s.filter { it.isDigit() }.toInt() }
+    for (name in filesNames) {
+        filesList.add(File("$currentFolder/$name"))
+    }
+    return filesList
+}
+
+//обработка файлов в диалоге
+fun goThroughDialogue(dialogueFolder: File): Int{
+    var counter = 0
+    val fileList = sortFilesByNum(dialogueFolder)
+    for (item in fileList) {
+        // TODO() парсер на файл
+        counter ++
+    }
+    return counter
+}
+
 // список id и имен
 fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
     val messagesDirectory = File(directoryPath, "messages")
