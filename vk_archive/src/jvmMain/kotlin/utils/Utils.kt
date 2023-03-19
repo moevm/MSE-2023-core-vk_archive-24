@@ -46,7 +46,6 @@ fun goThroughDialogue(dialogueFolder: File): Int{
     var counter = 0
     val fileList = sortFilesByNum(dialogueFolder)
     for (item in fileList) {
-        if(item == dialogueFolder) continue
         // TODO() парсер на файл
         counter ++
     }
