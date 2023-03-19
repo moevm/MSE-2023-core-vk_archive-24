@@ -1,9 +1,11 @@
 package utils
 
 import java.awt.image.BufferedImage
-import java.io.File
 import java.net.URL
 import javax.imageio.ImageIO
+import data.UsersNameId
+import java.io.File
+import java.nio.charset.Charset
 import javax.swing.JFileChooser
 
 // TODO: Удалить временное решение после добавления готового
@@ -52,4 +54,24 @@ fun reduceImageResolution(filePath: String, outputPath: String) {
     graphics.drawImage(inputImage, 0, 0, newWidth, newHeight, null)
     graphics.dispose()
     ImageIO.write(outputImage, "jpg", File(outputPath))
+}
+
+// список id и имен
+fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
+    val messagesDirectory = File(directoryPath, "messages")
+    val indexFile = File(messagesDirectory, "index-messages.html")
+    val usersNameIdList = mutableListOf<UsersNameId>()
+
+    if (indexFile.exists()) {
+        val htmlText = indexFile.readText(charset = Charset.forName("windows-1251"))
+        val regex = """<div class="message-peer--id">\s+<a href="(-?\d+)/messages0.html">([^<]+)</a>""".toRegex()
+        val matches = regex.findAll(htmlText)
+
+        for (match in matches) {
+            val (id, name) = match.destructured
+            usersNameIdList.add(UsersNameId(id, name))
+        }
+    }
+    else return null
+    return usersNameIdList
 }
