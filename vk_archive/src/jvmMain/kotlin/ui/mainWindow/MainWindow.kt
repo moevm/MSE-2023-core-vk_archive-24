@@ -22,7 +22,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import data.mockObject.FakeDialog
-import ui.aboutAlertDialog.AboutAlertDialog
+import ui.alertDialog.AboutAlertDialog
+import ui.alertDialog.StatusAlertDialog
 import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
 import windowManager.WindowsManager
@@ -35,19 +36,32 @@ fun MainWindow() {
     val chosenFolderState = remember { viewModel.currentDirectory }
     val aboutAlertDialogState: MutableState<Boolean> =
         remember { viewModel.isShowAboutAlertDialog }
+    val currentProcessAlertDialogState =
+        remember { viewModel.isShowProcessAlertDialog }
     val preparedDialogs = remember { viewModel.preparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
     Scaffold(
         topBar = {
             MainWindowTopBar(
-                onClickAboutButton = { viewModel.showAboutAlertDialog() },
-                onClickParsingAllButton = { viewModel.tryLoadAllPreparedDialogs() }
+                onClickImportButton = { viewModel.tryImportPreparedDialogs() },
+                onClickExportButton = { viewModel.exportPreparedDialogs() },
+                onClickParseAllButton = { viewModel.showProcessAlertDialog(); viewModel.parseAllDialogs() },
+                onClickAboutButton = { viewModel.showAboutAlertDialog() }
             )
         }
     ) {
         if (aboutAlertDialogState.value)
-            AboutAlertDialog { viewModel.hideAboutAlertDialog() }
+            AboutAlertDialog(onDismissRequest = { viewModel.hideAboutAlertDialog() })
+
+        if (currentProcessAlertDialogState.value)
+            StatusAlertDialog(
+                viewModel.processText.value,
+                viewModel.processProgress.value,
+                onDismissRequest = {
+                    viewModel.processJob?.cancel()
+                    viewModel.hideProcessAlertDialog()
+                })
 
         if (currentDialogId.value != null) {
             WindowsManager.prepareDialogWindow(
@@ -71,7 +85,7 @@ fun MainWindow() {
             ListOfDialogs(
                 viewModel.currentDialogs,
                 preparedDialogs,
-                onDialogParsingClick = { viewModel.loadAllPreparedDialogs() },
+                onDialogParsingClick = { viewModel.parseAllDialogs() },
                 onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
                 modifier = Modifier
                     .fillMaxSize()
