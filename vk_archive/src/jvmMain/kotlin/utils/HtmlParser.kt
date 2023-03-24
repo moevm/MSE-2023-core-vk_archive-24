@@ -10,56 +10,46 @@ import org.jsoup.select.Elements
 import java.io.File
 import java.io.IOException
 import java.util.*
-import kotlin.collections.ArrayList
 
 object HtmlParser {
-    private lateinit var messages:ArrayList<Message>
-    private lateinit var dialog: Dialog
 
     /**
      * file - директория с файлами сообщений
      */
     fun parseDialogFolder(file: File): Dialog{
-        dialog = Dialog();
-        messages = arrayListOf();
+        val dialog = Dialog();
         val tmp = file.listFiles();
         tmp.sortWith { o1, o2 ->
             val value1 = o1!!.name.filter { it.isDigit() }.toInt();
             val value2 = o2!!.name.filter { it.isDigit() }.toInt();
             value1 - value2;
         }
+        val tmpMessages = mutableListOf<Message>()
         tmp.forEach {
-            parseVkMessages(it);
+            parseVkMessagesFromHTML(it,tmpMessages,dialog.id.isBlank()) { id, name ->
+                dialog.id = id;
+                dialog.name = name;
+            };
         }
-        dialog.messages = messages;
+        dialog.messages = tmpMessages;
         return dialog;
     }
 
     private fun parseMonth(month:String):Int{
-        if (month.startsWith("янва"))
-            return 1;
-        if (month.startsWith("февра"))
-            return 2;
-        if (month.startsWith("мар"))
-            return 3;
-        if (month.startsWith("апре"))
-            return 4;
-        if (month.startsWith("ма"))
-            return 5;
-        if (month.startsWith("июн"))
-            return 6;
-        if (month.startsWith("июл"))
-            return 7;
-        if (month.startsWith("авг"))
-            return 8;
-        if (month.startsWith("сен"))
-            return 9;
-        if (month.startsWith("окт"))
-            return 10;
-        if (month.startsWith("ноя"))
-            return 11;
-        if (month.startsWith("дека"))
-            return 12;
+        when (month){
+            "янв"-> return 1;
+            "фев"-> return 2;
+            "мар"-> return 3;
+            "апр"-> return 4;
+            "мая"-> return 5;
+            "июн"-> return 6;
+            "июл"-> return 7;
+            "авг"-> return 8;
+            "сен"-> return 9;
+            "окт"-> return 10;
+            "ноя"-> return 11;
+            "дек"-> return 12;
+        }
         return 0;
     }
 
@@ -76,7 +66,7 @@ object HtmlParser {
         );
     }
 
-    private fun parseVkMessages(file: File){
+    private fun parseVkMessagesFromHTML(file: File, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (id:String, name:String)->Unit){
         if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
         val document: Document = try {
             Jsoup.parse(file, "Windows-1251")
@@ -103,14 +93,12 @@ object HtmlParser {
             val urlElem = (headerBlock.first())?.getElementsByTag("a");
             val url = urlElem?.first()?.attr("href");
             val id = url?.substring(15,url.length);
-            if (id!=null && dialog.id.isBlank()){
-                dialog.id = id;
-                dialog.name = name;
+            if (id!=null && listenerFlag){
+                listener(id,name)
             }
             message.authorId = id ?: "myId"
             message.authorName = name;
             message.messageTime = timeRaw
-            //parseDate(timeRaw)
 
             var content = "";
             val contentNodes = messageBlock
@@ -136,7 +124,7 @@ object HtmlParser {
                 attachments.add(attachment)
             }
             message.attachments = attachments;
-            messages.add(message)
+            messageArray.add(message);
         }
     }
 }
