@@ -30,7 +30,7 @@ fun StatusAlertDialog(
                     .fillMaxSize()
                     .padding(4.dp),
                 text = """$text 
-                    |Status: ${ceil(progress).toInt()}""".trimMargin(),
+                    |Status: ${ceil(progress).toInt()}/100""".trimMargin(),
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )

@@ -21,7 +21,8 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import data.mockObject.FakeDialog
+import data.UsersNameId
+import model.Dialog
 import ui.alertDialog.AboutAlertDialog
 import ui.alertDialog.StatusAlertDialog
 import ui.dialogItem.DialogItemAfter
@@ -33,12 +34,12 @@ import windowManager.WindowsManager
 fun MainWindow() {
     val viewModel = MainWindowViewModel()
 
-    val chosenFolderState = remember { viewModel.currentDirectory }
+    val chosenFolderState = remember { viewModel.vkArchiveData.currentDirectory }
     val aboutAlertDialogState: MutableState<Boolean> =
         remember { viewModel.isShowAboutAlertDialog }
     val currentProcessAlertDialogState =
         remember { viewModel.isShowProcessAlertDialog }
-    val preparedDialogs = remember { viewModel.preparedDialogs }
+    val preparedDialogs = remember { viewModel.vkArchiveData.preparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
     Scaffold(
@@ -83,9 +84,9 @@ fun MainWindow() {
                     .padding(horizontal = 16.dp,)
             )
             ListOfDialogs(
-                viewModel.currentDialogs,
+                viewModel.vkArchiveData.dialogsData,
                 preparedDialogs,
-                onDialogParsingClick = { viewModel.parseAllDialogs() },
+                onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                 onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
                 modifier = Modifier
                     .fillMaxSize()
@@ -140,9 +141,9 @@ fun ChosenFolderContent(
 
 @Composable
 fun ListOfDialogs(
-    dialogs: List<String>,
-    preparedDialogs: List<FakeDialog>,
-    onDialogParsingClick: () -> Unit,
+    dialogs: List<UsersNameId>,
+    preparedDialogs: List<Dialog>,
+    onDialogParsingClick: (String) -> Unit,
     onPreparedDialogClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -194,14 +195,14 @@ fun ListOfDialogs(
 }
 
 private fun LazyListScope.fillDialogBeforeList(
-    dialogs: List<String>,
-    onDialogParsingClick: () -> Unit
+    dialogs: List<UsersNameId>,
+    onDialogParsingClick: (String) -> Unit
 ) {
-    for (dialogTitle in dialogs) {
+    for ((id, dialogTitle) in dialogs) {
         item {
             DialogItemBefore(
                 title = dialogTitle,
-                onParsingClick = onDialogParsingClick,
+                onParsingClick = { onDialogParsingClick(id) },
                 modifier = Modifier
                     .height(40.dp)
                     .fillMaxWidth()
@@ -212,7 +213,7 @@ private fun LazyListScope.fillDialogBeforeList(
 }
 
 private fun LazyListScope.fillDialogAfterList(
-    dialogs: List<FakeDialog>,
+    dialogs: List<Dialog>,
     onPreparedDialogClick: (String) -> Unit
 ) {
     for (dialog in dialogs) {
@@ -220,8 +221,8 @@ private fun LazyListScope.fillDialogAfterList(
             DialogItemAfter(
                 dialog.id,
                 dialog.name,
-                dialog.amountMessages,
-                dialog.amountAttachments,
+                dialog.messages.size.toLong(),
+                0,
                 { onPreparedDialogClick(dialog.id) },
                 modifier = Modifier
                     .fillMaxWidth()
