@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import utils.*
 import data.getFakeDialogs
 import data.mockObject.FakeDialog
+import utils.chooseDirection
+import utils.getUsersNameIdList
+import utils.goThroughDialogue
 import java.io.File
 
 class MainWindowViewModel {
@@ -41,6 +44,25 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
+    //я все перенесу, я помню
+    fun goThroughMessages(): MutableList<String?>{
+        //возвращаем список обработанных диалогов
+        val fileNames = mutableListOf<String?>()
+        var counter = 0
+        val archiveFolder = File(currentDirectory.value).toString()
+        val messagesFolder = File("$archiveFolder/messages").listFiles()
+        if (messagesFolder != null){
+            for (dialogue in messagesFolder) {
+                if(dialogue.isDirectory){
+                    fileNames.add(dialogue.name)
+                    counter += goThroughDialogue(dialogue)
+                }
+            }
+            println(counter)
+        }
+        return fileNames
+    }
+    
     fun tryLoadAllPreparedDialogs() {
         if (currentFolder.value != null) {
             loadAllPreparedDialogs()
