@@ -1,11 +1,11 @@
 package utils
 
-import java.awt.image.BufferedImage
-import java.net.URL
-import javax.imageio.ImageIO
 import data.UsersNameId
+import java.awt.image.BufferedImage
 import java.io.File
+import java.net.URL
 import java.nio.charset.Charset
+import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 
 // TODO: Удалить временное решение после добавления готового
@@ -52,6 +52,7 @@ fun reduceImageResolution(filePath: String, outputPath: String, newWidth: Int, n
     graphics.drawImage(inputImage, 0, 0, newWidth, newHeight, null)
     graphics.dispose()
     ImageIO.write(outputImage, "jpg", File(outputPath))
+}
 
 //сортировка файлов по убыванию числа в названии
 fun sortFilesByNum(currentFolder: File): MutableList<File> {
