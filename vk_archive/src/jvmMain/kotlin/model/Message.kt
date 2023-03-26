@@ -1,5 +1,8 @@
 package model
 
+import kotlinx.serialization.*
+
+@Serializable
 data class Message(
         var authorId:String = "",
         var authorName:String = "",

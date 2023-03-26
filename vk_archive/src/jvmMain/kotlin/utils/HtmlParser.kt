@@ -32,6 +32,7 @@ object HtmlParser {
             };
         }
         dialog.messages = tmpMessages;
+        DialogJsonHelper.export(File("${file.absolutePath.substring(0,file.absolutePath.lastIndexOf("messages"))}/parsed_messages"), dialog)
         return dialog;
     }
 

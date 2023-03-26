@@ -5,6 +5,7 @@ import org.gradle.jvm.tasks.Jar
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
+    kotlin("plugin.serialization") version "1.5.0"
     java
 }
 
@@ -27,6 +28,7 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation ("org.jsoup:jsoup:1.15.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
             }
         }
         val jvmTest by getting
