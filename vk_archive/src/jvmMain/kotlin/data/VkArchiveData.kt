@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import data.mockObject.FakeDialog
 import kotlinx.coroutines.*
 import model.Dialog
+import model.UsersNameId
 import utils.HtmlParser
 import utils.chooseDirection
 import utils.getUsersNameIdList
@@ -81,6 +82,7 @@ class VkArchiveData {
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
                     if (isActive && dialog != null && !preparedDialogs.contains(dialog)) {
+                        println(dialog)
                         preparedDialogs.add(dialog)
                     }
                 }
@@ -134,4 +136,5 @@ class VkArchiveData {
         }
         return true
     }
+
 }

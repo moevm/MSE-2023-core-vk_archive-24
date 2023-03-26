@@ -1,6 +1,6 @@
 package utils
 
-import data.UsersNameId
+import model.UsersNameId
 import java.io.File
 import java.nio.charset.Charset
 import javax.swing.JFileChooser
