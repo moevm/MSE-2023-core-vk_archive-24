@@ -18,6 +18,7 @@ object HtmlParser {
      */
     fun parseDialogFolder(file: File): Dialog{
         val dialog = Dialog();
+        dialog.id = file.absolutePath.substring(file.absolutePath.lastIndexOf('\\')+1,file.absolutePath.length);
         val tmp = file.listFiles();
         tmp.sortWith { o1, o2 ->
             val value1 = o1!!.name.filter { it.isDigit() }.toInt();
@@ -26,12 +27,12 @@ object HtmlParser {
         }
         val tmpMessages = mutableListOf<Message>()
         tmp.forEach {
-            parseVkMessagesFromHTML(it,tmpMessages,dialog.id.isBlank()) { id, name ->
-                dialog.id = id;
+            parseVkMessagesFromHTML(it,tmpMessages,dialog.name.isBlank()) { name ->
                 dialog.name = name;
             };
         }
         dialog.messages = tmpMessages;
+        DialogJsonHelper.export(File("${file.absolutePath.substring(0,file.absolutePath.lastIndexOf("messages"))}/parsed_messages"), dialog)
         return dialog;
     }
 
@@ -66,12 +67,18 @@ object HtmlParser {
         );
     }
 
-    private fun parseVkMessagesFromHTML(file: File, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (id:String, name:String)->Unit){
+    private fun parseVkMessagesFromHTML(file: File, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (name:String)->Unit){
         if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
         val document: Document = try {
             Jsoup.parse(file, "Windows-1251")
         } catch (e: IOException) {
             throw RuntimeException(e)
+        }
+        if (listenerFlag){
+            val dialogHeaderBlock = document.getElementsByClass("ui_crumb");
+            val div = dialogHeaderBlock.eq(2);
+            val name = div.first()!!.text();
+            listener(name.toString())
         }
         val divs: Elements = document.getElementsByClass("item")
         // div in divs
@@ -93,9 +100,7 @@ object HtmlParser {
             val urlElem = (headerBlock.first())?.getElementsByTag("a");
             val url = urlElem?.first()?.attr("href");
             val id = url?.substring(15,url.length);
-            if (id!=null && listenerFlag){
-                listener(id,name)
-            }
+
             message.authorId = id ?: "myId"
             message.authorName = name;
             message.messageTime = timeRaw
