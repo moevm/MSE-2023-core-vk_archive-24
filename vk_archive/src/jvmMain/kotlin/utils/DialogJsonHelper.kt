@@ -7,6 +7,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 object DialogJsonHelper {
+    /**
+     * Во всех методах dir - папка ..\Archive\parsed_messages
+     */
 
     fun export(dir:File, dialog: Dialog){
         if (!dir.exists()){
@@ -19,14 +22,18 @@ object DialogJsonHelper {
         file.writeText(dialogString,Charsets.UTF_8);
     }
 
-    fun import(dir:File,ids:List<String>?):List<Dialog?>{
-        if (ids.isNullOrEmpty()){
-            val dialogs = dir.listFiles();
-            return dialogs.map {
-                val dialogString = it.readText(Charsets.UTF_8);
-                Json.decodeFromString(Dialog.serializer(),dialogString)
-            }
+    fun importAll(dir:File):List<Dialog?>{
+        val dialogs = dir.listFiles();
+        return dialogs.map {
+            val dialogString = it.readText(Charsets.UTF_8);
+            Json.decodeFromString(Dialog.serializer(),dialogString)
         }
+    }
+
+    /**
+     * ids - список с id диалогов
+     */
+    fun importIds(dir:File,ids:List<String>):List<Dialog?>{
         return ids.map {
             val file = File("${dir.absolutePath}/${it}.json")
             if (!file.exists()){
