@@ -45,9 +45,9 @@ fun MainWindow() {
     Scaffold(
         topBar = {
             MainWindowTopBar(
-                onClickImportButton = { viewModel.tryImportPreparedDialogs() },
+                onClickImportButton = { viewModel.importPreparedDialogs() },
                 onClickExportButton = { viewModel.exportPreparedDialogs() },
-                onClickParseAllButton = { viewModel.showProcessAlertDialog(); viewModel.parseAllDialogs() },
+                onClickParseAllButton = { viewModel.parseAllDialogs() },
                 onClickAboutButton = { viewModel.showAboutAlertDialog() }
             )
         }

@@ -11,23 +11,33 @@ object DialogJsonHelper {
      * Во всех методах dir - папка ..\Archive\parsed_messages
      */
 
-    fun export(dir:File, dialog: Dialog){
-        if (!dir.exists()){
+    fun export(dir: File, dialog: Dialog) {
+        if (!dir.exists()) {
             Files.createDirectory(Paths.get(dir.absolutePath))
         }
         val file = File("${dir.absolutePath}/${dialog.id}.json")
 
-        //обернуть в корутины
-        val dialogString = Json.encodeToString(Dialog.serializer(),dialog);
-        file.writeText(dialogString,Charsets.UTF_8);
+        val dialogString = Json.encodeToString(Dialog.serializer(), dialog)
+        file.writeText(dialogString, Charsets.UTF_8)
     }
 
-    fun importAll(dir:File):List<Dialog?>{
-        val dialogs = dir.listFiles();
-        return dialogs.map {
-            val dialogString = it.readText(Charsets.UTF_8);
-            Json.decodeFromString(Dialog.serializer(),dialogString)
+    fun importAll(
+        dir: File,
+        updateProcessStatus: (Double) -> Unit,
+        checkActiveState: () -> Boolean
+    ): List<Dialog> {
+        val dialogs = dir.listFiles() ?: return emptyList()
+        val result = ArrayList<Dialog>(dialogs.size)
+        for ((index, file) in dialogs.withIndex()) {
+            if (checkActiveState()) {
+                updateProcessStatus((index + 1).toDouble() / dialogs.size * 100)
+                val dialogString = file.readText(Charsets.UTF_8)
+                result.add(Json.decodeFromString(Dialog.serializer(), dialogString))
+            } else {
+                return emptyList()
+            }
         }
+        return result
     }
 
     /**
