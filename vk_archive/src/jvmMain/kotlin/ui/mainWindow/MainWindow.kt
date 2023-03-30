@@ -222,7 +222,7 @@ private fun LazyListScope.fillDialogAfterList(
                 dialog.id,
                 dialog.name,
                 dialog.messages.size.toLong(),
-                0,
+                dialog.messages.sumOf { it.attachments.size }.toLong(),
                 { onPreparedDialogClick(dialog.id) },
                 modifier = Modifier
                     .fillMaxWidth()
