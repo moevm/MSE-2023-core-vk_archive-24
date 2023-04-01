@@ -1,8 +1,11 @@
 package utils
 
-import model.UsersNameId
+import data.UsersNameId
+import java.awt.image.BufferedImage
 import java.io.File
+import java.net.URL
 import java.nio.charset.Charset
+import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 
 // TODO: Удалить временное решение после добавления готового
@@ -27,6 +30,28 @@ fun findFolder(startDir: File, folderName: String): File? {
         }
     }
     return null
+}
+
+//загрузка и сохранение изображения по ссылке
+fun downloadImageJPG(imageUrl: String, filePath: String) {
+    val url = URL(imageUrl)
+    val connection = url.openConnection()
+    connection.connect()
+    val inputStream = connection.getInputStream()
+    val outputStream = File(filePath).outputStream()
+    inputStream.copyTo(outputStream)
+    outputStream.close()
+    inputStream.close()
+}
+
+//Создание копии изображения в меньшем разрешении
+fun reduceImageResolution(filePath: String, outputPath: String, newWidth: Int, newHeight: Int) {
+    val inputImage = ImageIO.read(File(filePath))
+    val outputImage = BufferedImage(newWidth, newHeight, inputImage.type)
+    val graphics = outputImage.createGraphics()
+    graphics.drawImage(inputImage, 0, 0, newWidth, newHeight, null)
+    graphics.dispose()
+    ImageIO.write(outputImage, "jpg", File(outputPath))
 }
 
 //сортировка файлов по убыванию числа в названии

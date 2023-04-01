@@ -33,7 +33,7 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
-    fun showProcessAlertDialog() {
+    private fun showProcessAlertDialog() {
         isShowProcessAlertDialog.value = true
     }
 
@@ -44,12 +44,12 @@ class MainWindowViewModel {
     fun parseAllDialogs() {
         processJob = vkArchiveData.parseAllDialogs(
             initProcess = {
-                isShowProcessAlertDialog.value = true
+                showProcessAlertDialog()
                 processProgress.value = 0.0
                 processText.value = "Parsing dialogs..."
             },
             updateProcessStatus = { process -> processProgress.value = process },
-            resetProcess = { isShowProcessAlertDialog.value = false }
+            resetProcess = { hideProcessAlertDialog() }
         )
     }
 
@@ -57,20 +57,36 @@ class MainWindowViewModel {
         processJob = vkArchiveData.parseDialog(
             id,
             initProcess = {
-                isShowProcessAlertDialog.value = true
+                showProcessAlertDialog()
                 processProgress.value = 0.0
                 processText.value = "Parsing dialog..."
             },
             updateProcessStatus = { process -> processProgress.value = process },
-            resetProcess = { isShowProcessAlertDialog.value = false }
+            resetProcess = { hideProcessAlertDialog() }
         )
     }
 
-    fun tryImportPreparedDialogs() {
-        vkArchiveData.importPreparedDialogs()
+    fun importPreparedDialogs() {
+        processJob = vkArchiveData.importPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Import dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
     }
 
-    fun exportPreparedDialogs(): Boolean {
-        return vkArchiveData.exportPreparedDialogs()
+    fun exportPreparedDialogs() {
+        processJob = vkArchiveData.exportPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Export dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
     }
 }

@@ -3,14 +3,9 @@ package data
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import data.mockObject.FakeDialog
 import kotlinx.coroutines.*
 import model.Dialog
-import model.UsersNameId
-import utils.HtmlParser
-import utils.chooseDirection
-import utils.getUsersNameIdList
-import utils.goThroughDialogue
+import utils.*
 import java.io.File
 
 class VkArchiveData {
@@ -82,7 +77,6 @@ class VkArchiveData {
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
                     if (isActive && dialog != null && !preparedDialogs.contains(dialog)) {
-                        println(dialog)
                         preparedDialogs.add(dialog)
                     }
                 }
@@ -91,7 +85,6 @@ class VkArchiveData {
         }
     }
 
-    //я все перенесу, я помню
     fun goThroughMessages(): MutableList<String?>{
         //возвращаем список обработанных диалогов
         val fileNames = mutableListOf<String?>()
@@ -110,31 +103,43 @@ class VkArchiveData {
         return fileNames
     }
 
-    fun importPreparedDialogs() {
-        fun loadPreparedDialogs(file: File): List<FakeDialog>? { // TODO Удалить заглушку
-            return if (file.exists() || Math.random() >= 0.3) // TODO Убрать рандом
-                getFakeDialogs().shuffled().dropLast((Math.random() * 5).toInt())
-            else
-                null
-        }
-
+    fun importPreparedDialogs(
+        initProcess: () -> Unit,
+        updateProcessStatus: (Double) -> Unit,
+        resetProcess: () -> Unit
+    ): Job? {
         if (currentFolder.value != null) {
-            preparedDialogs.clear()
-            preparedDialogs.addAll(loadPreparedDialogs(File("${currentFolder.value!!.absolutePath}/parsed_messages"))?.map {
-                Dialog(it.id, it.name)
-            } ?: listOf())
+            return CoroutineScope(Dispatchers.IO).launch {
+                initProcess()
+                preparedDialogs.clear()
+                preparedDialogs.addAll(
+                    DialogJsonHelper.importAll(
+                        File("${currentFolder.value!!.absolutePath}/parsed_messages"),
+                        updateProcessStatus,
+                        checkActiveState = { isActive }
+                    )
+                )
+                resetProcess()
+            }
         }
     }
 
-    fun exportPreparedDialogs(): Boolean {
-        fun savePreparedDialogs(preparedDialogs: List<Dialog>): Boolean { // TODO Удалить, когда будет парсер
-            return Math.random() >= 0.5
+    fun exportPreparedDialogs(
+        initProcess: () -> Unit,
+        updateProcessStatus: (Double) -> Unit,
+        resetProcess: () -> Unit
+    ): Job? {
+        if (preparedDialogs.isNotEmpty() && currentFolder.value != null) {
+            return CoroutineScope(Dispatchers.IO).launch {
+                initProcess()
+                val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
+                for ((i, dialog) in preparedDialogs.withIndex()) {
+                    updateProcessStatus(i.toDouble() / preparedDialogs.size * 100)
+                    DialogJsonHelper.export(File(path), dialog)
+                }
+                resetProcess()
+            }
         }
-
-        if (preparedDialogs.isNotEmpty()) {
-            return savePreparedDialogs(preparedDialogs)
-        }
-        return true
+        return null
     }
-
 }

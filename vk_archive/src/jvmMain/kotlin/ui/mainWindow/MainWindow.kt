@@ -45,9 +45,9 @@ fun MainWindow() {
     Scaffold(
         topBar = {
             MainWindowTopBar(
-                onClickImportButton = { viewModel.tryImportPreparedDialogs() },
+                onClickImportButton = { viewModel.importPreparedDialogs() },
                 onClickExportButton = { viewModel.exportPreparedDialogs() },
-                onClickParseAllButton = { viewModel.showProcessAlertDialog(); viewModel.parseAllDialogs() },
+                onClickParseAllButton = { viewModel.parseAllDialogs() },
                 onClickAboutButton = { viewModel.showAboutAlertDialog() }
             )
         }
@@ -222,7 +222,7 @@ private fun LazyListScope.fillDialogAfterList(
                 dialog.id,
                 dialog.name,
                 dialog.messages.size.toLong(),
-                0,
+                dialog.messages.sumOf { it.attachments.size }.toLong(),
                 { onPreparedDialogClick(dialog.id) },
                 modifier = Modifier
                     .fillMaxWidth()
