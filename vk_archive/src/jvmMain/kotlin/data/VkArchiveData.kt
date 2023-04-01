@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
 import model.Dialog
+import model.UsersNameId
 import utils.*
 import java.io.File
 
@@ -142,5 +143,31 @@ class VkArchiveData {
             }
         }
         return null
+    }
+
+    fun downloadAttachments(dialog: Dialog, lastMessages: Int? = null, saveVideos: Boolean = false) : Job {
+        return CoroutineScope(Dispatchers.Default).launch {
+            println(dialog)
+            val videoType = "Видеозапись"
+            val messagesToProcess = if (lastMessages == null) dialog.messages else dialog.messages.take(lastMessages)
+            var i = 0
+            for (message in messagesToProcess) {
+                for (attachment in message.attachments) {
+                    if (attachment.url == null) continue
+                    val destination = if (attachment.attachmentType == videoType) {
+                        if (!saveVideos) continue
+                        File(currentFolder.value!!.absolutePath + "/parsed_messages/${dialog.id}/videos")
+                    } else {
+                        File(currentFolder.value!!.absolutePath + "/parsed_messages/${dialog.id}/images")
+                    }
+                    if (!destination.exists()) {
+                        destination.mkdirs()
+                    }
+                    val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
+                    downloadAttachment(attachment.url , File("$destination/${regexImage.find(attachment.url)?.value ?: "filename${i}.html"}"))
+                    i += 1
+                }
+            }
+        }
     }
 }

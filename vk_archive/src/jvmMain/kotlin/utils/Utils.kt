@@ -1,6 +1,6 @@
 package utils
 
-import data.UsersNameId
+import model.UsersNameId
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.URL
@@ -32,13 +32,13 @@ fun findFolder(startDir: File, folderName: String): File? {
     return null
 }
 
-//загрузка и сохранение изображения по ссылке
-fun downloadImageJPG(imageUrl: String, filePath: String) {
+//загрузка и сохранение файла по ссылке
+fun downloadAttachment(imageUrl: String, filePath: File) {
     val url = URL(imageUrl)
     val connection = url.openConnection()
     connection.connect()
     val inputStream = connection.getInputStream()
-    val outputStream = File(filePath).outputStream()
+    val outputStream = filePath.outputStream()
     inputStream.copyTo(outputStream)
     outputStream.close()
     inputStream.close()
