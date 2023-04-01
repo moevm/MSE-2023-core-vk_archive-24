@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import model.UsersNameId
 import model.Dialog
-import ui.alertDialog.AboutAlertDialog
+import ui.aboutAlertDialog.AboutAlertDialog
 import ui.alertDialog.StatusAlertDialog
 import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore

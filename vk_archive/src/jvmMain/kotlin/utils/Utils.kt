@@ -3,6 +3,8 @@ package utils
 import model.UsersNameId
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.FileNotFoundException
+import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
 import javax.imageio.ImageIO
@@ -34,14 +36,32 @@ fun findFolder(startDir: File, folderName: String): File? {
 
 //загрузка и сохранение файла по ссылке
 fun downloadAttachment(imageUrl: String, filePath: File) {
-    val url = URL(imageUrl)
-    val connection = url.openConnection()
-    connection.connect()
-    val inputStream = connection.getInputStream()
-    val outputStream = filePath.outputStream()
-    inputStream.copyTo(outputStream)
-    outputStream.close()
-    inputStream.close()
+    if (filePath.exists()) {
+        println("File $filePath already exists")
+        return
+    }
+
+    try {
+        val url = URL(imageUrl)
+        val connection = url.openConnection()
+        connection.connect()
+
+        val responseCode = (connection as HttpURLConnection).responseCode
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            println("Failed to download $imageUrl: response code $responseCode")
+            return
+        }
+
+        val inputStream = connection.getInputStream()
+        val outputStream = filePath.outputStream()
+        inputStream.copyTo(outputStream)
+        outputStream.close()
+        inputStream.close()
+    }
+    catch (e: FileNotFoundException){
+        println("File not found")
+        return
+    }
 }
 
 //Создание копии изображения в меньшем разрешении
@@ -67,18 +87,18 @@ fun sortFilesByNum(currentFolder: File): MutableList<File> {
 }
 
 //обработка файлов в диалоге
-fun goThroughDialogue(dialogueFolder: File): Int{
+fun goThroughDialogue(dialogueFolder: File): Int {
     var counter = 0
     val fileList = sortFilesByNum(dialogueFolder)
     for (item in fileList) {
         // TODO() парсер на файл
-        counter ++
+        counter++
     }
     return counter
 }
 
 // список id и имен
-fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
+fun getUsersNameIdList(directoryPath: String): List<UsersNameId>? {
     val messagesDirectory = File(directoryPath, "messages")
     val indexFile = File(messagesDirectory, "index-messages.html")
     val usersNameIdList = mutableListOf<UsersNameId>()
@@ -92,7 +112,6 @@ fun getUsersNameIdList (directoryPath: String): List<UsersNameId>?{
             val (id, name) = match.destructured
             usersNameIdList.add(UsersNameId(id, name))
         }
-    }
-    else return null
+    } else return null
     return usersNameIdList
 }
