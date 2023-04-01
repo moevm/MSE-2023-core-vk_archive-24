@@ -123,7 +123,6 @@ class VkArchiveData {
                 resetProcess()
             }
         }
-        return null
     }
 
     fun exportPreparedDialogs(
