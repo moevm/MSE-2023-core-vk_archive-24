@@ -42,7 +42,7 @@ fun DialogItemBefore(
                 .defaultMinSize(minWidth = 100.dp),
             onClick = onParsingClick
         ) {
-            Text("Parsing")
+            Text("Parse")
         }
     }
 }

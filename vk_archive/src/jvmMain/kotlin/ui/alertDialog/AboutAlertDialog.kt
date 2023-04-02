@@ -1,4 +1,4 @@
-package ui.aboutAlertDialog
+package ui.alertDialog
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
