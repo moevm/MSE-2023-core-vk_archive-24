@@ -1,39 +1,28 @@
 package ui.mainWindow
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import utils.*
-import data.getFakeDialogs
-import data.mockObject.FakeDialog
-import utils.chooseDirection
-import utils.getUsersNameIdList
-import utils.goThroughDialogue
-import java.io.File
+import data.VkArchiveData
+import kotlinx.coroutines.Job
 
 class MainWindowViewModel {
-    val currentDirectory = mutableStateOf("Please, choose VK Archive folder")
-    private val currentFolder: MutableState<File?> = mutableStateOf(null)
-    var currentDialogs = mutableStateListOf<String>()
-    val preparedDialogs = mutableStateListOf<FakeDialog>()
+    val vkArchiveData = VkArchiveData()
 
     val isShowAboutAlertDialog = mutableStateOf(false)
+
+    val isShowProcessAlertDialog = mutableStateOf(false)
+    val processProgress = mutableStateOf(0.0)
+    val processText = mutableStateOf("")
+    var processJob: Job? = null
 
     var currentDialogId = mutableStateOf<String?>(null)
 
     fun chooseFolder() {
-        val direction = chooseDirection()
-        currentDirectory.value = direction?.absolutePath ?: "Please, choose VK Archive folder"
-        currentFolder.value = direction
+        vkArchiveData.chooseFolder()
     }
 
     fun prepareDialogsList(): List<String> {
-        currentDialogs.clear()
-        currentDialogs.addAll(
-            getUsersNameIdList(currentFolder.value.toString())
-                ?.map { it.name }
-            ?: currentFolder.value?.listFiles()?.map { it.name } ?: emptyList())
-        return currentDialogs
+        vkArchiveData.prepareDialogsList()
+        return vkArchiveData.dialogsData.map { it.name }
     }
 
     fun showAboutAlertDialog() {
@@ -44,33 +33,60 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
-    //я все перенесу, я помню
-    fun goThroughMessages(): MutableList<String?>{
-        //возвращаем список обработанных диалогов
-        val fileNames = mutableListOf<String?>()
-        var counter = 0
-        val archiveFolder = File(currentDirectory.value).toString()
-        val messagesFolder = File("$archiveFolder/messages").listFiles()
-        if (messagesFolder != null){
-            for (dialogue in messagesFolder) {
-                if(dialogue.isDirectory){
-                    fileNames.add(dialogue.name)
-                    counter += goThroughDialogue(dialogue)
-                }
-            }
-            println(counter)
-        }
-        return fileNames
-    }
-    
-    fun tryLoadAllPreparedDialogs() {
-        if (currentFolder.value != null) {
-            loadAllPreparedDialogs()
-        }
+    private fun showProcessAlertDialog() {
+        isShowProcessAlertDialog.value = true
     }
 
-    fun loadAllPreparedDialogs() {
-        preparedDialogs.clear()
-        preparedDialogs.addAll(getFakeDialogs().shuffled())
+    fun hideProcessAlertDialog() {
+        isShowProcessAlertDialog.value = false
+    }
+
+    fun parseAllDialogs() {
+        processJob = vkArchiveData.parseAllDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Parsing dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun parseDialog(id: String) {
+        processJob = vkArchiveData.parseDialog(
+            id,
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Parsing dialog..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun importPreparedDialogs() {
+        processJob = vkArchiveData.importPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Import dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun exportPreparedDialogs() {
+        processJob = vkArchiveData.exportPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Export dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
     }
 }

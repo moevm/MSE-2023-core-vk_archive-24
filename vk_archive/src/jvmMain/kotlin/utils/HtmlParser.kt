@@ -18,7 +18,7 @@ object HtmlParser {
      */
     fun parseDialogFolder(file: File): Dialog{
         val dialog = Dialog();
-        dialog.id = file.absolutePath.substring(file.absolutePath.lastIndexOf('\\')+1,file.absolutePath.length);
+        dialog.id = file.name
         val tmp = file.listFiles();
         tmp.sortWith { o1, o2 ->
             val value1 = o1!!.name.filter { it.isDigit() }.toInt();
