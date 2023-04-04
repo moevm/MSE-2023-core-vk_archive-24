@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 @Preview
 fun MainWindowTopBar(
+    onClickImportButton: () -> Unit,
+    onClickExportButton: () -> Unit,
+    onClickParseAllButton: () -> Unit,
     onClickAboutButton: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -22,6 +25,15 @@ fun MainWindowTopBar(
         backgroundColor = Color.White
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Button(onClick = onClickImportButton) {
+                Text("Import")
+            }
+            Button(onClick = onClickExportButton) {
+                Text("Export")
+            }
+            Button(onClick = onClickParseAllButton) {
+                Text("Parse All")
+            }
             Button(onClick = onClickAboutButton) {
                 Text("About")
             }

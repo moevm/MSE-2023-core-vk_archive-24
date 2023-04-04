@@ -1,24 +1,28 @@
 package ui.mainWindow
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import utils.chooseDirection
-import utils.findFolder
-import java.io.File
-import java.nio.charset.Charset
+import data.VkArchiveData
+import kotlinx.coroutines.Job
 
 class MainWindowViewModel {
-    val currentDirectory = mutableStateOf("Please, choose VK Archive folder")
-    val currentFolder: MutableState<File?> = mutableStateOf(null)
+    val vkArchiveData = VkArchiveData()
+
     val isShowAboutAlertDialog = mutableStateOf(false)
 
-    fun chooseFolder() {
-        val direction = chooseDirection()
-        currentDirectory.value = direction?.absolutePath ?: "Please, choose VK Archive folder"
-        currentFolder.value = direction
+    val isShowProcessAlertDialog = mutableStateOf(false)
+    val processProgress = mutableStateOf(0.0)
+    val processText = mutableStateOf("")
+    var processJob: Job? = null
 
-        //тест функции поиска имени (потом удалить)
-        println(getFriendUserName("-15365973"))
+    var currentDialogId = mutableStateOf<String?>(null)
+
+    fun chooseFolder() {
+        vkArchiveData.chooseFolder()
+    }
+
+    fun prepareDialogsList(): List<String> {
+        vkArchiveData.prepareDialogsList()
+        return vkArchiveData.dialogsData.map { it.name }
     }
 
     fun showAboutAlertDialog() {
@@ -29,21 +33,60 @@ class MainWindowViewModel {
         isShowAboutAlertDialog.value = false
     }
 
-    // поиск имени по id (потом вынести из viewModel)
-    fun getFriendUserName(id: String): String? {
-        val startDir = File(currentDirectory.value).toString()
-        val searchDirs = listOf("$startDir/messages",startDir)
-        for (dir in searchDirs) {
-            println("Search in $dir")
-            val folder = findFolder(File(dir), id)
-            val htmlFile =
-                folder?.listFiles()?.get(0)?.readText(charset = Charset.forName("windows-1251")) ?: "error"
-            val regex = Regex("""<div class="ui_crumb"\s>\s*([^<]+)\s*</div>""")
-            val matchResult = regex.find(htmlFile)
-            if (matchResult != null){
-                return matchResult.groupValues[1]
-            }
-        }
-        return null
+    private fun showProcessAlertDialog() {
+        isShowProcessAlertDialog.value = true
+    }
+
+    fun hideProcessAlertDialog() {
+        isShowProcessAlertDialog.value = false
+    }
+
+    fun parseAllDialogs() {
+        processJob = vkArchiveData.parseAllDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Parsing dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun parseDialog(id: String) {
+        processJob = vkArchiveData.parseDialog(
+            id,
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Parsing dialog..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun importPreparedDialogs() {
+        processJob = vkArchiveData.importPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Import dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun exportPreparedDialogs() {
+        processJob = vkArchiveData.exportPreparedDialogs(
+            initProcess = {
+                showProcessAlertDialog()
+                processProgress.value = 0.0
+                processText.value = "Export dialogs..."
+            },
+            updateProcessStatus = { process -> processProgress.value = process },
+            resetProcess = { hideProcessAlertDialog() }
+        )
     }
 }
