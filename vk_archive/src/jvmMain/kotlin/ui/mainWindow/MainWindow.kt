@@ -39,7 +39,8 @@ fun MainWindow() {
         remember { viewModel.isShowAboutAlertDialog }
     val currentProcessAlertDialogState =
         remember { viewModel.isShowProcessAlertDialog }
-    val preparedDialogs = remember { viewModel.vkArchiveData.preparedDialogs }
+    val dialogs = remember { viewModel.filteredDialogs }
+    val preparedDialogs = remember { viewModel.filteredPreparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
     Scaffold(
@@ -76,15 +77,14 @@ fun MainWindow() {
             ChosenFolderContent(
                 chosenFolderState,
                 onChooseFolderClick = {
-                    viewModel.chooseFolder()
-                    viewModel.prepareDialogsList()
+                    viewModel.updateVkArchiveFolder()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp,)
             )
             ListOfDialogs(
-                viewModel.vkArchiveData.dialogsData,
+                dialogs,
                 preparedDialogs,
                 onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                 onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },

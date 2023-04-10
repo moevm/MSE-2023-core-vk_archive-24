@@ -1,8 +1,11 @@
 package ui.mainWindow
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import data.UsersNameId
 import data.VkArchiveData
 import kotlinx.coroutines.Job
+import model.Dialog
 
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
@@ -16,13 +19,28 @@ class MainWindowViewModel {
 
     var currentDialogId = mutableStateOf<String?>(null)
 
-    fun chooseFolder() {
-        vkArchiveData.chooseFolder()
-    }
+    var filteredDialogs = mutableStateListOf<UsersNameId>()
+    private var nameFilterForDialogs = ""
+        set(value) {
+            field = value
+            filteredDialogs.clear()
+            val newList = vkArchiveData.getFilteredDialogs { value in it.name }
+            filteredDialogs.addAll(newList)
+        }
 
-    fun prepareDialogsList(): List<String> {
+    var filteredPreparedDialogs = mutableStateListOf<Dialog>()
+    private var nameFilterForPreparedDialogs = ""
+        set(value) {
+            field = value
+            filteredPreparedDialogs.clear()
+            val newList = vkArchiveData.getFilteredPreparedDialogs { value in it.name }
+            filteredPreparedDialogs.addAll(newList)
+        }
+
+    fun updateVkArchiveFolder() {
+        vkArchiveData.chooseFolder()
         vkArchiveData.prepareDialogsList()
-        return vkArchiveData.dialogsData.map { it.name }
+        nameFilterForDialogs = ""
     }
 
     fun showAboutAlertDialog() {
@@ -49,7 +67,10 @@ class MainWindowViewModel {
                 processText.value = "Parsing dialogs..."
             },
             updateProcessStatus = { process -> processProgress.value = process },
-            resetProcess = { hideProcessAlertDialog() }
+            resetProcess = {
+                hideProcessAlertDialog()
+                nameFilterForPreparedDialogs = ""
+            }
         )
     }
 
@@ -62,7 +83,10 @@ class MainWindowViewModel {
                 processText.value = "Parsing dialog..."
             },
             updateProcessStatus = { process -> processProgress.value = process },
-            resetProcess = { hideProcessAlertDialog() }
+            resetProcess = {
+                hideProcessAlertDialog()
+                nameFilterForPreparedDialogs = ""
+            }
         )
     }
 
@@ -74,7 +98,10 @@ class MainWindowViewModel {
                 processText.value = "Import dialogs..."
             },
             updateProcessStatus = { process -> processProgress.value = process },
-            resetProcess = { hideProcessAlertDialog() }
+            resetProcess = {
+                hideProcessAlertDialog()
+                nameFilterForPreparedDialogs = ""
+            }
         )
     }
 
