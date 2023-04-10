@@ -20,7 +20,7 @@ class MainWindowViewModel {
     var currentDialogId = mutableStateOf<String?>(null)
 
     var filteredDialogs = mutableStateListOf<UsersNameId>()
-    private var nameFilterForDialogs = ""
+    var nameFilterForDialogs = ""
         set(value) {
             field = value
             filteredDialogs.clear()
@@ -29,7 +29,7 @@ class MainWindowViewModel {
         }
 
     var filteredPreparedDialogs = mutableStateListOf<Dialog>()
-    private var nameFilterForPreparedDialogs = ""
+    var nameFilterForPreparedDialogs = ""
         set(value) {
             field = value
             filteredPreparedDialogs.clear()

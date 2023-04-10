@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +85,12 @@ fun MainWindow() {
                 preparedDialogs,
                 onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                 onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
+                updateDialogsFilter = { newFilter ->
+                    viewModel.nameFilterForDialogs = newFilter
+                },
+                updatePreparedDialogsFilter = { newFilter ->
+                    viewModel.nameFilterForPreparedDialogs = newFilter
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -145,10 +148,15 @@ fun ListOfDialogs(
     preparedDialogs: List<Dialog>,
     onDialogParsingClick: (String) -> Unit,
     onPreparedDialogClick: (String) -> Unit,
+    updateDialogsFilter: (String) -> Unit,
+    updatePreparedDialogsFilter: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val lazyColumnDialogBeforeState = rememberLazyListState()
     val lazyColumnDialogAfterState = rememberLazyListState()
+
+    val nameFilterDialogs = remember { mutableStateOf("") }
+    val nameFilterPreparedDialogs = remember { mutableStateOf("") }
 
     Row(
         modifier = modifier,
@@ -162,14 +170,30 @@ fun ListOfDialogs(
                     color = Color.Gray
                 )
         ) {
-            LazyColumn(
-                state = lazyColumnDialogBeforeState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                fillDialogBeforeList(dialogs, onDialogParsingClick)
+            Column {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                    value = nameFilterDialogs.value,
+                    onValueChange = {
+                        nameFilterDialogs.value = it
+                        updateDialogsFilter(it)
+                    },
+                    singleLine = true,
+                    label = { Text("Поиск по всем") },
+                    placeholder = { Text("Здесь пока пусто...") }
+                )
+                Divider(Modifier.fillMaxWidth())
+                LazyColumn(
+                    state = lazyColumnDialogBeforeState,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    fillDialogBeforeList(dialogs, onDialogParsingClick)
+                }
             }
         }
 
@@ -181,14 +205,30 @@ fun ListOfDialogs(
                     color = Color.Green
                 )
         ) {
-            LazyColumn(
-                state = lazyColumnDialogAfterState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
+            Column {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                    value = nameFilterPreparedDialogs.value,
+                    onValueChange = {
+                        nameFilterPreparedDialogs.value = it
+                        updatePreparedDialogsFilter(it)
+                    },
+                    singleLine = true,
+                    label = { Text("Поиск по всем") },
+                    placeholder = { Text("Здесь пока пусто...") }
+                )
+                Divider(Modifier.fillMaxWidth())
+                LazyColumn(
+                    state = lazyColumnDialogAfterState,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
+                }
             }
         }
     }
