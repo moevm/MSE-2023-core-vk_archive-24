@@ -1,7 +1,7 @@
 package ui.mainWindow
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -93,7 +93,7 @@ fun MainWindow() {
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(16.dp)
             )
         }
     }
@@ -169,6 +169,7 @@ fun ListOfDialogs(
                     width = 3.dp,
                     color = Color.Gray
                 )
+                .padding(3.dp)
         ) {
             Column {
                 OutlinedTextField(
@@ -185,14 +186,26 @@ fun ListOfDialogs(
                     placeholder = { Text("Здесь пока пусто...") }
                 )
                 Divider(Modifier.fillMaxWidth())
-                LazyColumn(
-                    state = lazyColumnDialogBeforeState,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    fillDialogBeforeList(dialogs, onDialogParsingClick)
+                Box {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(end = 12.dp),
+                        state = lazyColumnDialogBeforeState,
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp,
+//                            vertical = 8.dp // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                        ),
+//                        verticalArrangement = Arrangement.spacedBy(6.dp) // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                    ) {
+                        fillDialogBeforeList(dialogs, onDialogParsingClick)
+                    }
+                    VerticalScrollbar(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .align(Alignment.CenterEnd),
+                        adapter = rememberScrollbarAdapter(lazyColumnDialogBeforeState)
+                    )
                 }
             }
         }
@@ -204,6 +217,7 @@ fun ListOfDialogs(
                     width = 3.dp,
                     color = Color.Green
                 )
+                .padding(3.dp)
         ) {
             Column {
                 OutlinedTextField(
@@ -220,14 +234,26 @@ fun ListOfDialogs(
                     placeholder = { Text("Здесь пока пусто...") }
                 )
                 Divider(Modifier.fillMaxWidth())
-                LazyColumn(
-                    state = lazyColumnDialogAfterState,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
+                Box {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(end = 12.dp),
+                        state = lazyColumnDialogAfterState,
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp,
+//                            vertical = 8.dp // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                        ),
+//                        verticalArrangement = Arrangement.spacedBy(6.dp) // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                    ) {
+                        fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
+                    }
+                    VerticalScrollbar(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .align(Alignment.CenterEnd),
+                        adapter = rememberScrollbarAdapter(lazyColumnDialogAfterState)
+                    )
                 }
             }
         }
