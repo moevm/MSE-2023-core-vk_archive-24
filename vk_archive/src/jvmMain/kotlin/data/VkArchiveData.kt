@@ -155,9 +155,9 @@ class VkArchiveData {
         amountMessages: Int? = null
     ) : Job {
         return CoroutineScope(Dispatchers.IO).launch {
-            if (isActive) {
-                val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
-                for (message in messagesToProcess) {
+            val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
+            for (message in messagesToProcess) {
+                if (isActive){
                     for (attachment in message.attachments) {
                         if (isActive) {
                             if (attachment.url == null) continue
@@ -189,7 +189,7 @@ class VkArchiveData {
                             }
                         } else break
                     }
-                }
+                } else break
             }
         }
     }
