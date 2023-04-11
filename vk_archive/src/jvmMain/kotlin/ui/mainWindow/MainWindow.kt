@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import model.UsersNameId
 import model.Dialog
+import model.UsersNameId
 import ui.aboutAlertDialog.AboutAlertDialog
 import ui.alertDialog.StatusAlertDialog
 import ui.dialogItem.DialogItemAfter
@@ -81,17 +81,28 @@ fun MainWindow() {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp,)
+                    .padding(horizontal = 16.dp)
             )
-            ListOfDialogs(
-                viewModel.vkArchiveData.dialogsData,
-                preparedDialogs,
-                onDialogParsingClick = { id -> viewModel.parseDialog(id) },
-                onPreparedDialogClick = { id -> viewModel.currentDialogId.value = id },
+
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-            )
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ListOfDialogsBefore(
+                    dialogs = viewModel.vkArchiveData.dialogsData,
+                    onDialogParsingClick = { id ->
+                        viewModel.currentDialogId.value = id
+                    })
+
+                ListOfDialogsAfter(
+                    preparedDialogs = preparedDialogs,
+                    onPreparedDialogClick = { id ->
+                        viewModel.currentDialogId.value = id
+                    }
+                )
+            }
         }
     }
 }
@@ -140,56 +151,59 @@ fun ChosenFolderContent(
 }
 
 @Composable
-fun ListOfDialogs(
+private fun RowScope.ListOfDialogsBefore(
     dialogs: List<UsersNameId>,
-    preparedDialogs: List<Dialog>,
-    onDialogParsingClick: (String) -> Unit,
-    onPreparedDialogClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onDialogParsingClick: (String) -> Unit
 ) {
     val lazyColumnDialogBeforeState = rememberLazyListState()
-    val lazyColumnDialogAfterState = rememberLazyListState()
-
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Box(
+        modifier = Modifier
+            .weight(50f)
+            .border(
+                width = 3.dp,
+                color = Color.Gray
+            )
     ) {
-        Box(
+        LazyColumn(
+            state = lazyColumnDialogBeforeState,
             modifier = Modifier
-                .weight(50f)
-                .border(
-                    width = 3.dp,
-                    color = Color.Gray
-                )
+                .fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            LazyColumn(
-                state = lazyColumnDialogBeforeState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                fillDialogBeforeList(dialogs, onDialogParsingClick)
-            }
+            fillDialogBeforeList(dialogs, onDialogParsingClick)
         }
+    }
+}
 
-        Box(
+@Composable
+private fun RowScope.ListOfDialogsAfter(
+    preparedDialogs: List<Dialog>,
+    onPreparedDialogClick: (String) -> Unit
+) {
+    val lazyColumnDialogAfterState = rememberLazyListState()
+    val checkboxListManager = remember { CheckboxListManager() }
+
+    Box(
+        modifier = Modifier
+            .weight(50f)
+            .border(
+                width = 3.dp,
+                color = Color.Green
+            )
+    ) {
+        LazyColumn(
+            state = lazyColumnDialogAfterState,
             modifier = Modifier
-                .weight(50f)
-                .border(
-                    width = 3.dp,
-                    color = Color.Green
-                )
+                .fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            LazyColumn(
-                state = lazyColumnDialogAfterState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
-            }
+            fillDialogAfterList(
+                preparedDialogs,
+                checkboxListManager,
+                onPreparedDialogClick
+            )
         }
     }
 }
@@ -214,15 +228,22 @@ private fun LazyListScope.fillDialogBeforeList(
 
 private fun LazyListScope.fillDialogAfterList(
     dialogs: List<Dialog>,
+    checkboxListManager: CheckboxListManager,
     onPreparedDialogClick: (String) -> Unit
 ) {
     for (dialog in dialogs) {
+        checkboxListManager.createCheckboxState(dialog.id)
         item {
             DialogItemAfter(
                 dialog.id,
                 dialog.name,
                 dialog.messages.size.toLong(),
                 dialog.messages.sumOf { it.attachments.size }.toLong(),
+                checkboxListManager.getCheckboxState(dialog.id),
+                checkboxListManager::updateCheckboxState,
+                checkboxListManager::hideCheckbox,
+                checkboxListManager::selectAllCheckboxes,
+                checkboxListManager.showCheckboxes,
                 { onPreparedDialogClick(dialog.id) },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -1,14 +1,11 @@
 package ui.dialogItem
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,62 +22,78 @@ fun DialogItemAfter(
     title: String,
     amountMessages: Long,
     amountAttachments: Long,
+    checkboxState: State<Boolean>,
+    updateCheckboxState: (id: String, state: Boolean) -> Unit,
+    hideCheckboxes: () -> Unit,
+    selectAllCheckboxes: () -> Unit,
+    showingCheckbox: State<Boolean>,
     onNavigateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .height(IntrinsicSize.Min)
-            .clickable(onClick = onNavigateClick)
-            .border(BorderStroke(1.dp, Color.Gray), RoundedCornerShape(14)),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .weight(30f)
-                .padding(start = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalAlignment = Alignment.Start
+    ContextMenuArea(items = {
+        listOf(ContextMenuItem("Select") {
+            updateCheckboxState(id, !checkboxState.value)
+        }, ContextMenuItem("Select all") {
+            selectAllCheckboxes()
+        }, ContextMenuItem("Clear all") {
+            hideCheckboxes()
+        })
+    }) {
+        Row(
+            modifier = modifier
+                .height(IntrinsicSize.Min)
+                .border(BorderStroke(1.dp, Color.Gray), RoundedCornerShape(14))
+                .clickable(onClick = {
+                    if (!showingCheckbox.value)
+                        onNavigateClick()
+                    else
+                        updateCheckboxState(id, !checkboxState.value)
+                }),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(
-                text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                overflow = TextOverflow.Ellipsis
+            if (showingCheckbox.value) {
+                Checkbox(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.CenterVertically),
+                    checked = checkboxState.value,
+                    colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary),
+                    onCheckedChange = {
+                        updateCheckboxState(id, it)
+                    })
+            }
+            Column(
+                modifier = Modifier
+                    .weight(30f)
+                    .padding(start = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = title,
+                    fontSize = TextUnit(18f, TextUnitType.Sp),
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "(id#$id)",
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color.Gray
+                )
+            }
+            Divider(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight(),
+                color = Color.Gray,
             )
-            Text(
-                text = "(id#$id)",
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-                overflow = TextOverflow.Ellipsis,
-                color = Color.Gray
-            )
-        }
-        Divider(
-            modifier = Modifier
-                .width(1.dp)
-                .fillMaxHeight(),
-            color = Color.Gray,
-        )
-        Column(
-            modifier = Modifier
-                .weight(18f)
-        ) {
-            Text("Amount msg: $amountMessages")
-            Text("Amount attchm: $amountAttachments")
+            Column(
+                modifier = Modifier
+                    .weight(18f)
+            ) {
+                Text("Amount msg: $amountMessages")
+                Text("Amount attchm: $amountAttachments")
+            }
         }
     }
-}
-
-@Preview
-@Composable
-fun showDialogItemAfter() {
-    DialogItemAfter(
-        "123857163284",
-        "Mr. Dow",
-        120L,
-        15L,
-        {},
-        Modifier
-            .width(450.dp)
-            .height(40.dp)
-    )
 }
