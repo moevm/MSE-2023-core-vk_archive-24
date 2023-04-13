@@ -194,9 +194,9 @@ fun ListOfDialogs(
                         state = lazyColumnDialogBeforeState,
                         contentPadding = PaddingValues(
                             horizontal = 16.dp,
-//                            vertical = 8.dp // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                            vertical = 8.dp
                         ),
-//                        verticalArrangement = Arrangement.spacedBy(6.dp) // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         fillDialogBeforeList(dialogs, onDialogParsingClick)
                     }
@@ -242,9 +242,9 @@ fun ListOfDialogs(
                         state = lazyColumnDialogAfterState,
                         contentPadding = PaddingValues(
                             horizontal = 16.dp,
-//                            vertical = 8.dp // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                            vertical = 8.dp
                         ),
-//                        verticalArrangement = Arrangement.spacedBy(6.dp) // FIXME(zhshkvir): Проблема с выходящим за границы списка скроллбаром
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         fillDialogAfterList(preparedDialogs, onPreparedDialogClick)
                     }
