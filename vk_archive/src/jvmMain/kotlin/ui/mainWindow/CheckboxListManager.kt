@@ -36,6 +36,8 @@ class CheckboxListManager {
         } else throw IllegalArgumentException("Invalid id for checkbox state")
     }
 
+    fun getSelectedIds() = setOfCheckboxesId
+
     fun selectAllCheckboxes() {
         for ((id, _) in mapOfCheckboxesState) {
             mapOfCheckboxesState[id]!!.value = true

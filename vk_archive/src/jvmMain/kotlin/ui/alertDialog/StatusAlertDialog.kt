@@ -11,13 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlin.math.ceil
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StatusAlertDialog(
     text: String,
-    progress: Double,
+    status: String,
     onDismissRequest: () -> Unit
 ) {
     AlertDialog(
@@ -30,7 +29,7 @@ fun StatusAlertDialog(
                     .fillMaxSize()
                     .padding(4.dp),
                 text = """$text 
-                    |Status: ${ceil(progress).toInt()}/100""".trimMargin(),
+                    |Status: $status""".trimMargin(),
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )

@@ -1,6 +1,5 @@
 package ui.mainWindow
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.FrameWindowScope
 import model.Dialog
 import model.UsersNameId
 import ui.aboutAlertDialog.AboutAlertDialog
@@ -30,8 +30,7 @@ import ui.dialogItem.DialogItemBefore
 import windowManager.WindowsManager
 
 @Composable
-@Preview
-fun MainWindow() {
+fun FrameWindowScope.MainWindow() {
     val viewModel = MainWindowViewModel()
 
     val chosenFolderState = remember { viewModel.vkArchiveData.currentDirectory }
@@ -42,23 +41,26 @@ fun MainWindow() {
     val preparedDialogs = remember { viewModel.vkArchiveData.preparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
-    Scaffold(
-        topBar = {
-            MainWindowTopBar(
-                onClickImportButton = { viewModel.importPreparedDialogs() },
-                onClickExportButton = { viewModel.exportPreparedDialogs() },
-                onClickParseAllButton = { viewModel.parseAllDialogs() },
-                onClickAboutButton = { viewModel.showAboutAlertDialog() }
-            )
-        }
-    ) {
+    val preparedDialogsCheckboxManager = remember { CheckboxListManager() }
+
+    MainWindowTopBar(
+        onClickImportButton = { viewModel.importPreparedDialogs() },
+        onClickExportButton = { viewModel.exportPreparedDialogs() },
+        onClickParseAllButton = { viewModel.parseAllDialogs() },
+        onClickDownloadImages = {
+            viewModel.downloadImages(preparedDialogsCheckboxManager.getSelectedIds())
+        },
+        onClickAboutButton = { viewModel.showAboutAlertDialog() }
+    )
+
+    Scaffold {
         if (aboutAlertDialogState.value)
             AboutAlertDialog(onDismissRequest = { viewModel.hideAboutAlertDialog() })
 
         if (currentProcessAlertDialogState.value)
             StatusAlertDialog(
                 viewModel.processText.value,
-                viewModel.processProgress.value,
+                viewModel.status.value,
                 onDismissRequest = {
                     viewModel.processJob?.cancel()
                     viewModel.hideProcessAlertDialog()
@@ -98,6 +100,7 @@ fun MainWindow() {
 
                 ListOfDialogsAfter(
                     preparedDialogs = preparedDialogs,
+                    checkboxListManager = preparedDialogsCheckboxManager,
                     onPreparedDialogClick = { id ->
                         viewModel.currentDialogId.value = id
                     }
@@ -179,10 +182,10 @@ private fun RowScope.ListOfDialogsBefore(
 @Composable
 private fun RowScope.ListOfDialogsAfter(
     preparedDialogs: List<Dialog>,
+    checkboxListManager: CheckboxListManager,
     onPreparedDialogClick: (String) -> Unit
 ) {
     val lazyColumnDialogAfterState = rememberLazyListState()
-    val checkboxListManager = remember { CheckboxListManager() }
 
     Box(
         modifier = Modifier

@@ -31,7 +31,7 @@ class VkArchiveData {
 
     fun parseAllDialogs(
         initProcess: () -> Unit,
-        updateProcessStatus: (Double) -> Unit,
+        updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit
     ): Job {
         return CoroutineScope(Dispatchers.Default).launch {
@@ -45,7 +45,7 @@ class VkArchiveData {
 
                     for ((index, file) in listFiles.withIndex()) {
                         if (isActive) {
-                            updateProcessStatus((index + 1).toDouble() / listFiles.size * 100)
+                            updateProcessStatus("${(index + 1)}/${listFiles.size}")
                             if (file.path.last().isDigit()) tempList.add(
                                 HtmlParser.parseDialogFolder(File(file.path))
                             )
@@ -64,7 +64,7 @@ class VkArchiveData {
     fun parseDialog(
         id: String,
         initProcess: () -> Unit,
-        updateProcessStatus: (Double) -> Unit,
+        updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit
     ): Job {
         return CoroutineScope(Dispatchers.Default).launch {
@@ -74,7 +74,7 @@ class VkArchiveData {
                     val file = File("${currentFolder.value?.path}/messages/$id")
                     var dialog: Dialog? = null
                     if (isActive) {
-                        updateProcessStatus(1.0 * 100)
+                        updateProcessStatus("1/1")
                         if (file.path.last().isDigit())
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
@@ -107,7 +107,7 @@ class VkArchiveData {
 
     fun importPreparedDialogs(
         initProcess: () -> Unit,
-        updateProcessStatus: (Double) -> Unit,
+        updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit
     ): Job? {
         if (currentFolder.value != null) {
@@ -129,7 +129,7 @@ class VkArchiveData {
 
     fun exportPreparedDialogs(
         initProcess: () -> Unit,
-        updateProcessStatus: (Double) -> Unit,
+        updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit
     ): Job? {
         if (preparedDialogs.isNotEmpty() && currentFolder.value != null) {
@@ -137,7 +137,7 @@ class VkArchiveData {
                 initProcess()
                 val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
                 for ((i, dialog) in preparedDialogs.withIndex()) {
-                    updateProcessStatus(i.toDouble() / preparedDialogs.size * 100)
+                    updateProcessStatus("$i/${preparedDialogs.size}")
                     DialogJsonHelper.export(File(path), dialog)
                 }
                 resetProcess()
@@ -150,47 +150,57 @@ class VkArchiveData {
      * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
      */
     fun downloadAttachments(
-        dialog: Dialog,
+        initProcess: () -> Unit,
+        updateProcessStatus: (String) -> Unit,
+        resetProcess: () -> Unit,
+        dialogs: List<Dialog>,
         fileTypesToDownload: List<List<String>>,
-        amountMessages: Int? = null
+        amountMessages: Int? = null,
     ) : Job {
         return CoroutineScope(Dispatchers.IO).launch {
-            val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
-            for (message in messagesToProcess) {
-                if (isActive){
-                    for (attachment in message.attachments) {
+            initProcess()
+            for((index, dialog) in dialogs.withIndex()) {
+                if (isActive) {
+                    val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
+                    for (message in messagesToProcess) {
                         if (isActive) {
-                            if (attachment.url == null) continue
-                            var destination =
-                                File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
+                            for (attachment in message.attachments) {
+                                if (isActive) {
+                                    if (attachment.url == null) continue
+                                    var destination =
+                                        File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
 
-                            when (attachment.attachmentType) {
-                                in AttachmentType.PHOTO -> {
-                                    if (AttachmentType.PHOTO !in fileTypesToDownload) continue
-                                    destination = File("${destination}/images").apply {
-                                        if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
+                                    when (attachment.attachmentType) {
+                                        in AttachmentType.PHOTO -> {
+                                            if (AttachmentType.PHOTO !in fileTypesToDownload) continue
+                                            destination = File("${destination}/images").apply {
+                                                if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
+                                            }
+                                            val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
+                                            downloadAttachment(
+                                                attachment.url,
+                                                File("$destination/${regexImage.find(attachment.url)?.value ?: continue}")
+                                            )
+                                        }
+
+                                        in AttachmentType.VIDEO,
+                                        in AttachmentType.GIFT,
+                                        in AttachmentType.FILE,
+                                        in AttachmentType.STICKER,
+                                        in AttachmentType.URL,
+                                        in AttachmentType.AUDIO,
+                                        in AttachmentType.CALL,
+                                        in AttachmentType.POST -> { continue }
+                                        else -> { continue }
                                     }
-                                    val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
-                                    downloadAttachment(
-                                        attachment.url,
-                                        File("$destination/${regexImage.find(attachment.url)?.value ?: continue}")
-                                    )
-                                }
-
-                                in AttachmentType.VIDEO,
-                                in AttachmentType.GIFT,
-                                in AttachmentType.FILE,
-                                in AttachmentType.STICKER,
-                                in AttachmentType.URL,
-                                in AttachmentType.AUDIO,
-                                in AttachmentType.CALL,
-                                in AttachmentType.POST -> { continue }
-                                else -> { continue }
+                                } else break
                             }
                         } else break
                     }
-                } else break
+                }
+                updateProcessStatus("${index + 1}/${dialogs.size}")
             }
+            resetProcess()
         }
     }
 }

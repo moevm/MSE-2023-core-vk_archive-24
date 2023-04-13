@@ -3,6 +3,7 @@ package ui.mainWindow
 import androidx.compose.runtime.mutableStateOf
 import data.VkArchiveData
 import kotlinx.coroutines.Job
+import model.AttachmentType
 
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
@@ -10,7 +11,7 @@ class MainWindowViewModel {
     val isShowAboutAlertDialog = mutableStateOf(false)
 
     val isShowProcessAlertDialog = mutableStateOf(false)
-    val processProgress = mutableStateOf(0.0)
+    val status = mutableStateOf("")
     val processText = mutableStateOf("")
     var processJob: Job? = null
 
@@ -45,10 +46,10 @@ class MainWindowViewModel {
         processJob = vkArchiveData.parseAllDialogs(
             initProcess = {
                 showProcessAlertDialog()
-                processProgress.value = 0.0
+                status.value = ""
                 processText.value = "Parsing dialogs..."
             },
-            updateProcessStatus = { process -> processProgress.value = process },
+            updateProcessStatus = { process -> status.value = process },
             resetProcess = { hideProcessAlertDialog() }
         )
     }
@@ -58,10 +59,10 @@ class MainWindowViewModel {
             id,
             initProcess = {
                 showProcessAlertDialog()
-                processProgress.value = 0.0
+                status.value = ""
                 processText.value = "Parsing dialog..."
             },
-            updateProcessStatus = { process -> processProgress.value = process },
+            updateProcessStatus = { process -> status.value = process },
             resetProcess = { hideProcessAlertDialog() }
         )
     }
@@ -70,10 +71,10 @@ class MainWindowViewModel {
         processJob = vkArchiveData.importPreparedDialogs(
             initProcess = {
                 showProcessAlertDialog()
-                processProgress.value = 0.0
+                status.value = ""
                 processText.value = "Import dialogs..."
             },
-            updateProcessStatus = { process -> processProgress.value = process },
+            updateProcessStatus = { process -> status.value = process },
             resetProcess = { hideProcessAlertDialog() }
         )
     }
@@ -82,11 +83,25 @@ class MainWindowViewModel {
         processJob = vkArchiveData.exportPreparedDialogs(
             initProcess = {
                 showProcessAlertDialog()
-                processProgress.value = 0.0
+                status.value = ""
                 processText.value = "Export dialogs..."
             },
-            updateProcessStatus = { process -> processProgress.value = process },
+            updateProcessStatus = { process -> status.value = process },
             resetProcess = { hideProcessAlertDialog() }
+        )
+    }
+
+    fun downloadImages(selectedIds: Set<String>) {
+        processJob = vkArchiveData.downloadAttachments(
+            initProcess = {
+                showProcessAlertDialog()
+                status.value = ""
+                processText.value = "Download images..."
+            },
+            updateProcessStatus = { process -> status.value = process },
+            resetProcess = { hideProcessAlertDialog() },
+            vkArchiveData.preparedDialogs.filter { selectedIds.contains(it.id) },
+            listOf(AttachmentType.PHOTO)
         )
     }
 }
