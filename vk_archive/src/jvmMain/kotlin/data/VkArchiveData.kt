@@ -4,7 +4,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
+import model.AttachmentType
 import model.Dialog
+import model.UsersNameId
 import utils.*
 import java.io.File
 
@@ -142,5 +144,53 @@ class VkArchiveData {
             }
         }
         return null
+    }
+
+    /**
+     * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
+     */
+    fun downloadAttachments(
+        dialog: Dialog,
+        fileTypesToDownload: List<List<String>>,
+        amountMessages: Int? = null
+    ) : Job {
+        return CoroutineScope(Dispatchers.IO).launch {
+            val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
+            for (message in messagesToProcess) {
+                if (isActive){
+                    for (attachment in message.attachments) {
+                        if (isActive) {
+                            if (attachment.url == null) continue
+                            var destination =
+                                File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
+
+                            when (attachment.attachmentType) {
+                                in AttachmentType.PHOTO -> {
+                                    if (AttachmentType.PHOTO !in fileTypesToDownload) continue
+                                    destination = File("${destination}/images").apply {
+                                        if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
+                                    }
+                                    val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
+                                    downloadAttachment(
+                                        attachment.url,
+                                        File("$destination/${regexImage.find(attachment.url)?.value ?: continue}")
+                                    )
+                                }
+
+                                in AttachmentType.VIDEO,
+                                in AttachmentType.GIFT,
+                                in AttachmentType.FILE,
+                                in AttachmentType.STICKER,
+                                in AttachmentType.URL,
+                                in AttachmentType.AUDIO,
+                                in AttachmentType.CALL,
+                                in AttachmentType.POST -> { continue }
+                                else -> { continue }
+                            }
+                        } else break
+                    }
+                } else break
+            }
+        }
     }
 }
