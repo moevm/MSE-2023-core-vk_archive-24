@@ -2,14 +2,15 @@ package model
 
 enum class AttachmentType(val translates: List<String>) {
     PHOTO(listOf("Фотография", "Photo")),
-    VIDEO(listOf("Видеозапись")),
-    GIFT(listOf("Подарок")),
-    FILE(listOf("Файл")),
-    STICKER(listOf("Стикер")),
-    URL(listOf("Ссылка")),
-    AUDIO(listOf("Аудиозапись")),
-    CALL(listOf("Звонок")),
-    POST(listOf("Запись на стене"));
+    VIDEO(listOf("Видеозапись", "Video")),
+    GIFT(listOf("Подарок", "Gift")),
+    FILE(listOf("Файл", "File")),
+    STICKER(listOf("Стикер", "Sticker")),
+    URL(listOf("Ссылка", "Link")),
+    AUDIO(listOf("Аудиозапись", "Audio file")),
+    CALL(listOf("Звонок", "Call")),
+    POST(listOf("Запись на стене", "Wall post")),
+    COMMENT(listOf("Комментарий на стене", "Wall comment"));
 
     companion object {
         @JvmStatic

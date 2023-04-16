@@ -1,7 +1,7 @@
 package ui.mainWindow
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -39,7 +39,8 @@ fun FrameWindowScope.MainWindow() {
     val viewModel = MainWindowViewModel()
 
     val chosenFolderState = remember { viewModel.vkArchiveData.currentDirectory }
-    val preparedDialogs = remember { viewModel.vkArchiveData.preparedDialogs }
+    val dialogs = remember { viewModel.filteredDialogs }
+    val preparedDialogs = remember { viewModel.filteredPreparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
     val preparedDialogsCheckboxManager = remember { HideableCheckboxListManager() }
@@ -69,8 +70,7 @@ fun FrameWindowScope.MainWindow() {
             ChosenFolderContent(
                 chosenFolderState,
                 onChooseFolderClick = {
-                    viewModel.chooseFolder()
-                    viewModel.prepareDialogsList()
+                    viewModel.updateVkArchiveFolder()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -80,13 +80,16 @@ fun FrameWindowScope.MainWindow() {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ListOfDialogsBefore(
                     dialogs = viewModel.vkArchiveData.dialogsData,
                     onDialogParsingClick = { id ->
                         viewModel.currentDialogId.value = id
+                    },
+                    updateDialogsFilter = { newFilter ->
+                        viewModel.nameFilterForDialogs = newFilter
                     })
 
                 ListOfDialogsAfter(
@@ -94,6 +97,9 @@ fun FrameWindowScope.MainWindow() {
                     hideableCheckboxListManager = preparedDialogsCheckboxManager,
                     onPreparedDialogClick = { id ->
                         viewModel.currentDialogId.value = id
+                    },
+                    updatePreparedDialogsFilter = { newFilter ->
+                        viewModel.nameFilterForPreparedDialogs = newFilter
                     }
                 )
             }
@@ -242,9 +248,12 @@ private fun ChosenFolderContent(
 @Composable
 private fun RowScope.ListOfDialogsBefore(
     dialogs: List<UsersNameId>,
-    onDialogParsingClick: (String) -> Unit
+    onDialogParsingClick: (String) -> Unit,
+    updateDialogsFilter: (String) -> Unit
 ) {
     val lazyColumnDialogBeforeState = rememberLazyListState()
+    val nameFilterDialogs = remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .weight(50f)
@@ -252,15 +261,44 @@ private fun RowScope.ListOfDialogsBefore(
                 width = 3.dp,
                 color = Color.Gray
             )
+            .padding(3.dp)
     ) {
-        LazyColumn(
-            state = lazyColumnDialogBeforeState,
-            modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            fillDialogBeforeList(dialogs, onDialogParsingClick)
+        Column {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                value = nameFilterDialogs.value,
+                onValueChange = {
+                    nameFilterDialogs.value = it
+                    updateDialogsFilter(it)
+                },
+                singleLine = true,
+                label = { Text("Поиск по всем") },
+                placeholder = { Text("Здесь пока пусто...") }
+            )
+            Divider(Modifier.fillMaxWidth())
+            Box {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(end = 12.dp),
+                    state = lazyColumnDialogBeforeState,
+                    contentPadding = PaddingValues(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    fillDialogBeforeList(dialogs, onDialogParsingClick)
+                }
+                VerticalScrollbar(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.CenterEnd),
+                    adapter = rememberScrollbarAdapter(lazyColumnDialogBeforeState)
+                )
+            }
         }
     }
 }
@@ -269,9 +307,11 @@ private fun RowScope.ListOfDialogsBefore(
 private fun RowScope.ListOfDialogsAfter(
     preparedDialogs: List<Dialog>,
     hideableCheckboxListManager: HideableCheckboxListManager,
-    onPreparedDialogClick: (String) -> Unit
+    onPreparedDialogClick: (String) -> Unit,
+    updatePreparedDialogsFilter: (String) -> Unit
 ) {
     val lazyColumnDialogAfterState = rememberLazyListState()
+    val nameFilterPreparedDialogs = remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -280,19 +320,50 @@ private fun RowScope.ListOfDialogsAfter(
                 width = 3.dp,
                 color = Color.Green
             )
+            .padding(3.dp)
     ) {
-        LazyColumn(
-            state = lazyColumnDialogAfterState,
-            modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            fillDialogAfterList(
-                preparedDialogs,
-                hideableCheckboxListManager,
-                onPreparedDialogClick
+        Column {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                value = nameFilterPreparedDialogs.value,
+                onValueChange = {
+                    nameFilterPreparedDialogs.value = it
+                    updatePreparedDialogsFilter(it)
+                },
+                singleLine = true,
+                label = { Text("Поиск по всем") },
+                placeholder = { Text("Здесь пока пусто...") }
             )
+            Divider(Modifier.fillMaxWidth())
+            Box {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(end = 12.dp),
+                    state = lazyColumnDialogAfterState,
+                    contentPadding = PaddingValues(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    fillDialogAfterList(
+                        preparedDialogs,
+                        hideableCheckboxListManager,
+                        onPreparedDialogClick
+                    )
+                }
+                VerticalScrollbar(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.CenterEnd),
+                    adapter = rememberScrollbarAdapter(
+                        lazyColumnDialogAfterState
+                    )
+                )
+            }
         }
     }
 }

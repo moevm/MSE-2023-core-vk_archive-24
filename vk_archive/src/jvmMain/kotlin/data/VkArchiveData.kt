@@ -15,7 +15,7 @@ class VkArchiveData {
 
     private val currentFolder: MutableState<File?> = mutableStateOf(null)
     var dialogsData = mutableStateListOf<UsersNameId>()
-    val preparedDialogs = mutableStateListOf<Dialog>()
+    val preparedDialogsData = mutableStateListOf<Dialog>()
     fun chooseFolder() {
         val direction = chooseDirection()
         currentDirectory.value =
@@ -28,6 +28,12 @@ class VkArchiveData {
         val listNameId = getUsersNameIdList(currentFolder.value.toString())
         dialogsData.addAll(listNameId?: emptyList())
     }
+
+    fun getFilteredDialogs(filter: (UsersNameId) -> Boolean): List<UsersNameId> =
+        dialogsData.filter(filter)
+
+    fun getFilteredPreparedDialogs(filter: (Dialog) -> Boolean): List<Dialog> =
+        preparedDialogsData.filter(filter)
 
     fun parseAllDialogs(
         initProcess: () -> Unit,
@@ -52,8 +58,8 @@ class VkArchiveData {
                         } else break
                     }
                     if (isActive) {
-                        preparedDialogs.clear()
-                        preparedDialogs.addAll(tempList)
+                        preparedDialogsData.clear()
+                        preparedDialogsData.addAll(tempList)
                     }
                 }
             }
@@ -78,8 +84,8 @@ class VkArchiveData {
                         if (file.path.last().isDigit())
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
-                    if (isActive && dialog != null && !preparedDialogs.contains(dialog)) {
-                        preparedDialogs.add(dialog)
+                    if (isActive && dialog != null && !preparedDialogsData.contains(dialog)) {
+                        preparedDialogsData.add(dialog)
                     }
                 }
             }
@@ -113,8 +119,8 @@ class VkArchiveData {
         if (currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
                 initProcess()
-                preparedDialogs.clear()
-                preparedDialogs.addAll(
+                preparedDialogsData.clear()
+                preparedDialogsData.addAll(
                     DialogJsonHelper.importAll(
                         File("${currentFolder.value!!.absolutePath}/parsed_messages"),
                         updateProcessStatus,
@@ -132,12 +138,12 @@ class VkArchiveData {
         updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit
     ): Job? {
-        if (preparedDialogs.isNotEmpty() && currentFolder.value != null) {
+        if (preparedDialogsData.isNotEmpty() && currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
                 initProcess()
                 val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
-                for ((i, dialog) in preparedDialogs.withIndex()) {
-                    updateProcessStatus("$i/${preparedDialogs.size}")
+                for ((i, dialog) in preparedDialogsData.withIndex()) {
+                    updateProcessStatus("$i/${preparedDialogsData.size}")
                     DialogJsonHelper.export(File(path), dialog)
                 }
                 resetProcess()
@@ -191,7 +197,8 @@ class VkArchiveData {
                                         in AttachmentType.URL.translates,
                                         in AttachmentType.AUDIO.translates,
                                         in AttachmentType.CALL.translates,
-                                        in AttachmentType.POST.translates -> { continue }
+                                        in AttachmentType.COMMENT.translates,
+                                in AttachmentType.POST.translates -> { continue }
                                         else -> { continue }
                                     }
                                 } else break
