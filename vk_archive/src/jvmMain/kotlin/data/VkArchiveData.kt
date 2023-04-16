@@ -154,11 +154,12 @@ class VkArchiveData {
         updateProcessStatus: (String) -> Unit,
         resetProcess: () -> Unit,
         dialogs: List<Dialog>,
-        fileTypesToDownload: List<List<String>>,
+        fileTypesToDownload: List<AttachmentType>,
         amountMessages: Int? = null,
     ) : Job {
         return CoroutineScope(Dispatchers.IO).launch {
             initProcess()
+            updateProcessStatus("0/${dialogs.size}")
             for((index, dialog) in dialogs.withIndex()) {
                 if (isActive) {
                     val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
@@ -171,7 +172,7 @@ class VkArchiveData {
                                         File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
 
                                     when (attachment.attachmentType) {
-                                        in AttachmentType.PHOTO -> {
+                                        in AttachmentType.PHOTO.translates -> {
                                             if (AttachmentType.PHOTO !in fileTypesToDownload) continue
                                             destination = File("${destination}/images").apply {
                                                 if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
@@ -183,14 +184,14 @@ class VkArchiveData {
                                             )
                                         }
 
-                                        in AttachmentType.VIDEO,
-                                        in AttachmentType.GIFT,
-                                        in AttachmentType.FILE,
-                                        in AttachmentType.STICKER,
-                                        in AttachmentType.URL,
-                                        in AttachmentType.AUDIO,
-                                        in AttachmentType.CALL,
-                                        in AttachmentType.POST -> { continue }
+                                        in AttachmentType.VIDEO.translates,
+                                        in AttachmentType.GIFT.translates,
+                                        in AttachmentType.FILE.translates,
+                                        in AttachmentType.STICKER.translates,
+                                        in AttachmentType.URL.translates,
+                                        in AttachmentType.AUDIO.translates,
+                                        in AttachmentType.CALL.translates,
+                                        in AttachmentType.POST.translates -> { continue }
                                         else -> { continue }
                                     }
                                 } else break

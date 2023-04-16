@@ -1,9 +1,11 @@
 package ui.mainWindow
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import data.VkArchiveData
 import kotlinx.coroutines.Job
 import model.AttachmentType
+import ui.alertDialog.DialogWithContentState
 
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
@@ -14,6 +16,9 @@ class MainWindowViewModel {
     val status = mutableStateOf("")
     val processText = mutableStateOf("")
     var processJob: Job? = null
+
+    val dialogWithContentState: MutableState<DialogWithContentState?> =
+        mutableStateOf(null)
 
     var currentDialogId = mutableStateOf<String?>(null)
 
@@ -91,17 +96,34 @@ class MainWindowViewModel {
         )
     }
 
-    fun downloadImages(selectedIds: Set<String>) {
-        processJob = vkArchiveData.downloadAttachments(
-            initProcess = {
-                showProcessAlertDialog()
-                status.value = ""
-                processText.value = "Download images..."
-            },
-            updateProcessStatus = { process -> status.value = process },
-            resetProcess = { hideProcessAlertDialog() },
-            vkArchiveData.preparedDialogs.filter { selectedIds.contains(it.id) },
-            listOf(AttachmentType.PHOTO)
-        )
+    fun downloadAttachments(selectedIds: Set<String>) {
+        this.dialogWithContentState.value =
+            createDownloadDialog(
+                hideDownloadDialog = { this.dialogWithContentState.value = null },
+                downloadAttachments = { selectedAttachments: Set<String> ->
+                    processJob = vkArchiveData.downloadAttachments(
+                        initProcess = {
+                            showProcessAlertDialog()
+                            status.value = ""
+                            processText.value = "Download attachments..."
+                        },
+                        updateProcessStatus = { process ->
+                            status.value = process
+                        },
+                        resetProcess = { hideProcessAlertDialog() },
+                        dialogs = vkArchiveData.preparedDialogs.filter {
+                            selectedIds.contains(
+                                it.id
+                            )
+                        },
+                        fileTypesToDownload = AttachmentType.values().filter { types ->
+                            types.translates.find { type ->
+                                selectedAttachments.contains(type)
+                            } != null
+                        }
+                    )
+                }
+            )
     }
+
 }

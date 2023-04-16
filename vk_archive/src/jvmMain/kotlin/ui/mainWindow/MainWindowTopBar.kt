@@ -10,7 +10,7 @@ fun FrameWindowScope.MainWindowTopBar(
     onClickImportButton: () -> Unit,
     onClickExportButton: () -> Unit,
     onClickParseAllButton: () -> Unit,
-    onClickDownloadImages: () -> Unit,
+    onClickDownloadAttachments: () -> Unit,
     onClickAboutButton: () -> Unit
 ) {
     MenuBar {
@@ -22,7 +22,7 @@ fun FrameWindowScope.MainWindowTopBar(
             Item("Parse All", onClick = onClickParseAllButton)
         }
         Menu("Dialogs", mnemonic = 'D') {
-            Item("Download images for dialogs", onClick = onClickDownloadImages)
+            Item("Download attachments from dialogs", onClick = onClickDownloadAttachments)
         }
         Menu("About", mnemonic = 'A') {
             Item("About", onClick = onClickAboutButton)

@@ -1,14 +1,14 @@
 package ui.mainWindow
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,12 +21,17 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
+import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
-import ui.aboutAlertDialog.AboutAlertDialog
+import ui.alertDialog.AboutAlertDialog
+import ui.alertDialog.DialogWithContent
+import ui.alertDialog.DialogWithContentState
 import ui.alertDialog.StatusAlertDialog
 import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
+import utils.DefaultCheckboxListManager
+import utils.HideableCheckboxListManager
 import windowManager.WindowsManager
 
 @Composable
@@ -34,37 +39,23 @@ fun FrameWindowScope.MainWindow() {
     val viewModel = MainWindowViewModel()
 
     val chosenFolderState = remember { viewModel.vkArchiveData.currentDirectory }
-    val aboutAlertDialogState: MutableState<Boolean> =
-        remember { viewModel.isShowAboutAlertDialog }
-    val currentProcessAlertDialogState =
-        remember { viewModel.isShowProcessAlertDialog }
     val preparedDialogs = remember { viewModel.vkArchiveData.preparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
 
-    val preparedDialogsCheckboxManager = remember { CheckboxListManager() }
+    val preparedDialogsCheckboxManager = remember { HideableCheckboxListManager() }
 
     MainWindowTopBar(
         onClickImportButton = { viewModel.importPreparedDialogs() },
         onClickExportButton = { viewModel.exportPreparedDialogs() },
         onClickParseAllButton = { viewModel.parseAllDialogs() },
-        onClickDownloadImages = {
-            viewModel.downloadImages(preparedDialogsCheckboxManager.getSelectedIds())
+        onClickDownloadAttachments = {
+            viewModel.downloadAttachments(preparedDialogsCheckboxManager.getSelectedIds())
         },
         onClickAboutButton = { viewModel.showAboutAlertDialog() }
     )
 
     Scaffold {
-        if (aboutAlertDialogState.value)
-            AboutAlertDialog(onDismissRequest = { viewModel.hideAboutAlertDialog() })
-
-        if (currentProcessAlertDialogState.value)
-            StatusAlertDialog(
-                viewModel.processText.value,
-                viewModel.status.value,
-                onDismissRequest = {
-                    viewModel.processJob?.cancel()
-                    viewModel.hideProcessAlertDialog()
-                })
+        initAlertDialogs(viewModel)
 
         if (currentDialogId.value != null) {
             WindowsManager.prepareDialogWindow(
@@ -100,7 +91,7 @@ fun FrameWindowScope.MainWindow() {
 
                 ListOfDialogsAfter(
                     preparedDialogs = preparedDialogs,
-                    checkboxListManager = preparedDialogsCheckboxManager,
+                    hideableCheckboxListManager = preparedDialogsCheckboxManager,
                     onPreparedDialogClick = { id ->
                         viewModel.currentDialogId.value = id
                     }
@@ -110,9 +101,104 @@ fun FrameWindowScope.MainWindow() {
     }
 }
 
+@Composable
+private fun initAlertDialogs(viewModel: MainWindowViewModel) {
+    val aboutAlertDialogState: MutableState<Boolean> =
+        remember { viewModel.isShowAboutAlertDialog }
+    val currentProcessAlertDialogState =
+        remember { viewModel.isShowProcessAlertDialog }
+
+    AboutAlertDialog(
+        dialogState = aboutAlertDialogState,
+        onDismissRequest = { viewModel.hideAboutAlertDialog() }
+    )
+
+    StatusAlertDialog(
+        dialogState = currentProcessAlertDialogState,
+        text = viewModel.processText.value,
+        status = viewModel.status.value,
+        onDismissRequest = {
+            viewModel.processJob?.cancel()
+            viewModel.hideProcessAlertDialog()
+        })
+
+    DialogWithContent(dialogWithContentState = viewModel.dialogWithContentState)
+}
+
+fun createDownloadDialog(
+    hideDownloadDialog: () -> Unit,
+    downloadAttachments: (attachmentTypes: Set<String>) -> Unit
+) = DialogWithContentState(
+    title = "Select type of attachments",
+    content = {
+        val items =
+            remember { AttachmentType.getDownloadable().map { it.first() } }
+        val checkboxListManager = remember { DefaultCheckboxListManager() }
+        Box {
+            Box(
+                modifier = Modifier
+                    .padding(bottom = 50.dp)
+                    .fillMaxHeight()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    for (itemText in items) {
+                        checkboxListManager.createCheckboxState(itemText)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clickable {
+                                    checkboxListManager.updateCheckboxState(
+                                        itemText,
+                                        !checkboxListManager.getCheckboxState(itemText).value
+                                    )
+                                },
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = checkboxListManager.getCheckboxState(itemText).value,
+                                onCheckedChange = {
+                                    checkboxListManager.updateCheckboxState(itemText, it)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colors.primary
+                                )
+                            )
+                            Text(itemText)
+                        }
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = {
+                    downloadAttachments(checkboxListManager.getSelectedIds())
+                    hideDownloadDialog()
+                }) {
+                    Text("Submit")
+                }
+                Button(onClick = { hideDownloadDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        }
+    },
+    onDismissClick = { hideDownloadDialog() }
+)
+
 @OptIn(ExperimentalUnitApi::class)
 @Composable
-fun ChosenFolderContent(
+private fun ChosenFolderContent(
     chosenFolderState: MutableState<String>,
     onChooseFolderClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -182,7 +268,7 @@ private fun RowScope.ListOfDialogsBefore(
 @Composable
 private fun RowScope.ListOfDialogsAfter(
     preparedDialogs: List<Dialog>,
-    checkboxListManager: CheckboxListManager,
+    hideableCheckboxListManager: HideableCheckboxListManager,
     onPreparedDialogClick: (String) -> Unit
 ) {
     val lazyColumnDialogAfterState = rememberLazyListState()
@@ -204,7 +290,7 @@ private fun RowScope.ListOfDialogsAfter(
         ) {
             fillDialogAfterList(
                 preparedDialogs,
-                checkboxListManager,
+                hideableCheckboxListManager,
                 onPreparedDialogClick
             )
         }
@@ -231,22 +317,22 @@ private fun LazyListScope.fillDialogBeforeList(
 
 private fun LazyListScope.fillDialogAfterList(
     dialogs: List<Dialog>,
-    checkboxListManager: CheckboxListManager,
+    hideableCheckboxListManager: HideableCheckboxListManager,
     onPreparedDialogClick: (String) -> Unit
 ) {
     for (dialog in dialogs) {
-        checkboxListManager.createCheckboxState(dialog.id)
+        hideableCheckboxListManager.createCheckboxState(dialog.id)
         item {
             DialogItemAfter(
                 dialog.id,
                 dialog.name,
                 dialog.messages.size.toLong(),
                 dialog.messages.sumOf { it.attachments.size }.toLong(),
-                checkboxListManager.getCheckboxState(dialog.id),
-                checkboxListManager::updateCheckboxState,
-                checkboxListManager::hideCheckbox,
-                checkboxListManager::selectAllCheckboxes,
-                checkboxListManager.showCheckboxes,
+                hideableCheckboxListManager.getCheckboxState(dialog.id),
+                hideableCheckboxListManager::updateCheckboxState,
+                hideableCheckboxListManager::hideCheckbox,
+                hideableCheckboxListManager::selectAllCheckboxes,
+                hideableCheckboxListManager.showCheckboxes,
                 { onPreparedDialogClick(dialog.id) },
                 modifier = Modifier
                     .fillMaxWidth()
