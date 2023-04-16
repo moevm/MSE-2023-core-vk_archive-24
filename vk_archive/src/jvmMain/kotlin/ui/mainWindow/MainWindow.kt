@@ -82,9 +82,7 @@ fun FrameWindowScope.MainWindow() {
             ) {
                 ListOfDialogsBefore(
                     dialogs = dialogs,
-                    onDialogParsingClick = { id ->
-                        viewModel.currentDialogId.value = id
-                    },
+                    onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                     updateDialogsFilter = { newFilter ->
                         viewModel.nameFilterForDialogs = newFilter
                     })
