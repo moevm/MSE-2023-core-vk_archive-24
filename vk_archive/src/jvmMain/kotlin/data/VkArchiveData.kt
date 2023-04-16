@@ -191,6 +191,7 @@ class VkArchiveData {
                                 in AttachmentType.URL,
                                 in AttachmentType.AUDIO,
                                 in AttachmentType.CALL,
+                                in AttachmentType.COMMENT,
                                 in AttachmentType.POST -> { continue }
                                 else -> { continue }
                             }
