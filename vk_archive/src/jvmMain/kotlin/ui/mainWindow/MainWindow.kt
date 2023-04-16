@@ -1,13 +1,10 @@
 package ui.mainWindow
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,10 +81,8 @@ fun FrameWindowScope.MainWindow() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ListOfDialogsBefore(
-                    dialogs = viewModel.vkArchiveData.dialogsData,
-                    onDialogParsingClick = { id ->
-                        viewModel.currentDialogId.value = id
-                    },
+                    dialogs = dialogs,
+                    onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                     updateDialogsFilter = { newFilter ->
                         viewModel.nameFilterForDialogs = newFilter
                     })
