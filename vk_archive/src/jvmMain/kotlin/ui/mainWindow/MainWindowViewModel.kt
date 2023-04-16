@@ -1,14 +1,14 @@
 package ui.mainWindow
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import data.VkArchiveData
 import kotlinx.coroutines.Job
 import model.AttachmentType
-import ui.alertDialog.DialogWithContentState
 import model.Dialog
 import model.UsersNameId
+import ui.alertDialog.DialogWithContentState
 
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
@@ -138,7 +138,7 @@ class MainWindowViewModel {
                             status.value = process
                         },
                         resetProcess = { hideProcessAlertDialog() },
-                        dialogs = vkArchiveData.preparedDialogs.filter {
+                        dialogs = vkArchiveData.preparedDialogsData.filter {
                             selectedIds.contains(
                                 it.id
                             )
