@@ -1,42 +1,31 @@
 package ui.mainWindow
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material.Button
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.FrameWindowScope
+import androidx.compose.ui.window.MenuBar
+
 
 @Composable
-@Preview
-fun MainWindowTopBar(
+fun FrameWindowScope.MainWindowTopBar(
     onClickImportButton: () -> Unit,
     onClickExportButton: () -> Unit,
     onClickParseAllButton: () -> Unit,
-    onClickAboutButton: () -> Unit,
-    modifier: Modifier = Modifier
+    onClickDownloadAttachments: () -> Unit,
+    onClickAboutButton: () -> Unit
 ) {
-    TopAppBar(
-        modifier = modifier,
-        backgroundColor = Color.White
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(onClick = onClickImportButton) {
-                Text("Import")
-            }
-            Button(onClick = onClickExportButton) {
-                Text("Export")
-            }
-            Button(onClick = onClickParseAllButton) {
-                Text("Parse All")
-            }
-            Button(onClick = onClickAboutButton) {
-                Text("About")
-            }
+    MenuBar {
+        Menu("File", mnemonic = 'F') {
+            Item("Import", onClick = onClickImportButton)
+            Item("Export", onClick = onClickExportButton)
+        }
+        Menu("Parse", mnemonic = 'P') {
+            Item("Parse All", onClick = onClickParseAllButton)
+        }
+        Menu("Dialogs", mnemonic = 'D') {
+            Item("Download attachments from dialogs", onClick = onClickDownloadAttachments)
+        }
+        Menu("About", mnemonic = 'A') {
+            Item("About", onClick = onClickAboutButton)
         }
     }
 }

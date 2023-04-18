@@ -23,14 +23,14 @@ object DialogJsonHelper {
 
     fun importAll(
         dir: File,
-        updateProcessStatus: (Double) -> Unit,
+        updateProcessStatus: (String) -> Unit,
         checkActiveState: () -> Boolean
     ): List<Dialog> {
         val dialogs = dir.listFiles() ?: return emptyList()
         val result = ArrayList<Dialog>(dialogs.size)
         for ((index, file) in dialogs.withIndex()) {
             if (checkActiveState()) {
-                updateProcessStatus((index + 1).toDouble() / dialogs.size * 100)
+                updateProcessStatus("${index + 1}/${dialogs.size}")
                 val dialogString = file.readText(Charsets.UTF_8)
                 result.add(Json.decodeFromString(Dialog.serializer(), dialogString))
             } else {
