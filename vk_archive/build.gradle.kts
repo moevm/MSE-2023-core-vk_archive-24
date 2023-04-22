@@ -1,6 +1,6 @@
-import org.jetbrains.compose.compose
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform")
@@ -29,6 +29,7 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation ("org.jsoup:jsoup:1.15.4")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+                implementation("com.mikepenz:multiplatform-markdown-renderer:0.6.1")
             }
         }
         val jvmTest by getting

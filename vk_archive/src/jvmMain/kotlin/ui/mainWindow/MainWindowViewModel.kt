@@ -13,7 +13,7 @@ import ui.alertDialog.DialogWithContentState
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
 
-    val isShowAboutAlertDialog = mutableStateOf(false)
+    val isShowAboutDialog = mutableStateOf(false)
 
     val isShowProcessAlertDialog = mutableStateOf(false)
     val status = mutableStateOf("")
@@ -50,11 +50,11 @@ class MainWindowViewModel {
     }
 
     fun showAboutAlertDialog() {
-        isShowAboutAlertDialog.value = true
+        isShowAboutDialog.value = true
     }
 
     fun hideAboutAlertDialog() {
-        isShowAboutAlertDialog.value = false
+        isShowAboutDialog.value = false
     }
 
     private fun showProcessAlertDialog() {
