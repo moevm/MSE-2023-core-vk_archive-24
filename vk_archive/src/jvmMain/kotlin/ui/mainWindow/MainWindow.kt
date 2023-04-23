@@ -21,7 +21,7 @@ import androidx.compose.ui.window.FrameWindowScope
 import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
-import ui.alertDialog.AboutAlertDialog
+import ui.alertDialog.AboutDialog
 import ui.alertDialog.DialogWithContent
 import ui.alertDialog.DialogWithContentState
 import ui.alertDialog.StatusAlertDialog
@@ -104,13 +104,13 @@ fun FrameWindowScope.MainWindow() {
 
 @Composable
 private fun initAlertDialogs(viewModel: MainWindowViewModel) {
-    val aboutAlertDialogState: MutableState<Boolean> =
-        remember { viewModel.isShowAboutAlertDialog }
+    val aboutDialogState: MutableState<Boolean> =
+        remember { viewModel.isShowAboutDialog }
     val currentProcessAlertDialogState =
         remember { viewModel.isShowProcessAlertDialog }
 
-    AboutAlertDialog(
-        dialogState = aboutAlertDialogState,
+    AboutDialog(
+        dialogState = aboutDialogState,
         onDismissRequest = { viewModel.hideAboutAlertDialog() }
     )
 
