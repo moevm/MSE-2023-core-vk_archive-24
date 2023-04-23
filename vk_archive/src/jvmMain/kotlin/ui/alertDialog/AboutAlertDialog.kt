@@ -1,45 +1,42 @@
 package ui.alertDialog
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.rememberDialogState
+import com.mikepenz.markdown.Markdown
+import utils.StringResources
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun AboutAlertDialog(
+fun AboutDialog(
     dialogState: State<Boolean>,
     onDismissRequest: () -> Unit
 ) {
     if (dialogState.value) {
-        AlertDialog(
-            modifier = Modifier
-                .width(350.dp)
-                .height(IntrinsicSize.Min),
-            text = {
-                Text(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(4.dp),
-                    text = """
-                    VK Archive
-                    This program can parsing Vk Archive and display it for you in a convenient format
-                    
-                    Instruction: 
-                    1) Unzip VK Archive in folder
-                    2) Choose your folder by "Choose folder"
-                    3) ...
-                """.trimIndent(),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center)
-            },
-            onDismissRequest = onDismissRequest,
-            buttons = {}
-        )
+        Dialog(
+            state = rememberDialogState(
+                WindowPosition(Alignment.Center),
+                DpSize(600.dp, 600.dp)
+            ),
+            title = "About",
+            onCloseRequest = onDismissRequest
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Markdown(content = StringResources.aboutText)
+            }
+        }
     }
 }
