@@ -14,7 +14,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.mikepenz.markdown.Markdown
-import utils.StringResources
+import utils.languages.StringResources
 
 @Composable
 fun AboutDialog(
@@ -27,7 +27,7 @@ fun AboutDialog(
                 WindowPosition(Alignment.Center),
                 DpSize(600.dp, 600.dp)
             ),
-            title = "About",
+            title = StringResources.about.updatableString(),
             onCloseRequest = onDismissRequest
         ) {
             Column(
@@ -35,7 +35,7 @@ fun AboutDialog(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Markdown(content = StringResources.aboutText)
+                Markdown(content = StringResources.aboutText.updatableString())
             }
         }
     }

@@ -9,6 +9,7 @@ import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
 import ui.alertDialog.DialogWithContentState
+import utils.languages.StringResources
 
 class MainWindowViewModel {
     val vkArchiveData = VkArchiveData()
@@ -70,7 +71,7 @@ class MainWindowViewModel {
             initProcess = {
                 showProcessAlertDialog()
                 status.value = ""
-                processText.value = "Parsing dialogs..."
+                processText.value = "${StringResources.parsingDialogs.updatableString()}..."
             },
             updateProcessStatus = { process -> status.value = process },
             resetProcess = {
@@ -86,7 +87,7 @@ class MainWindowViewModel {
             initProcess = {
                 showProcessAlertDialog()
                 status.value = ""
-                processText.value = "Parsing dialog..."
+                processText.value = "${StringResources.parsingDialog.updatableString()}..."
             },
             updateProcessStatus = { process -> status.value = process },
             resetProcess = {
@@ -101,7 +102,7 @@ class MainWindowViewModel {
             initProcess = {
                 showProcessAlertDialog()
                 status.value = ""
-                processText.value = "Import dialogs..."
+                processText.value = "${StringResources.importDialogs.updatableString()}..."
             },
             updateProcessStatus = { process -> status.value = process },
             resetProcess = {
@@ -116,7 +117,7 @@ class MainWindowViewModel {
             initProcess = {
                 showProcessAlertDialog()
                 status.value = ""
-                processText.value = "Export dialogs..."
+                processText.value = "${StringResources.exportDialogs.updatableString()}..."
             },
             updateProcessStatus = { process -> status.value = process },
             resetProcess = { hideProcessAlertDialog() }
@@ -132,7 +133,7 @@ class MainWindowViewModel {
                         initProcess = {
                             showProcessAlertDialog()
                             status.value = ""
-                            processText.value = "Download attachments..."
+                            processText.value = "${StringResources.downloadAttachments.updatableString()}..."
                         },
                         updateProcessStatus = { process ->
                             status.value = process
@@ -144,7 +145,7 @@ class MainWindowViewModel {
                             )
                         },
                         fileTypesToDownload = AttachmentType.values().filter { types ->
-                            types.translates.find { type ->
+                            types.translates.values.find { type ->
                                 selectedAttachments.contains(type)
                             } != null
                         }
@@ -152,5 +153,4 @@ class MainWindowViewModel {
                 }
             )
     }
-
 }
