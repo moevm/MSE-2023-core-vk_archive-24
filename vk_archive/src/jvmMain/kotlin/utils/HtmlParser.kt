@@ -14,7 +14,7 @@ import java.util.*
 object HtmlParser {
 
     /**
-     * file - директория с файлами сообщений
+     * Принимает на вход директорию file, которая содержит диалог и создает объект Dialog и заполняет его поля: id (имя директории), messages (сообщения, полученные из html-файлов директории с использованием parseVkMessagesFromHTML). Dialog возвращается в качестве результата функции.
      */
     fun parseDialogFolder(file: File): Dialog{
         val dialog = Dialog();
@@ -66,6 +66,8 @@ object HtmlParser {
         );
     }
 
+    /**
+     * Принимает на вход файл, список для сообщений Message, флаг listenerFlag и слушатель listener. Парсит содержимое HTML-файла для извлечения сообщений из файла и заполнения ими входного списка. Сообщение содержит автора, текст, время отправки и список вложений**/
     private fun parseVkMessagesFromHTML(file: File, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (name:String)->Unit){
         if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
         val document: Document = try {
