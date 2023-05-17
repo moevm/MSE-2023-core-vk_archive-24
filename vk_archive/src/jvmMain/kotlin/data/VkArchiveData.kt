@@ -11,15 +11,14 @@ import utils.*
 import java.io.File
 
 class VkArchiveData {
-    val currentDirectory = mutableStateOf("Please, choose VK Archive folder")
+    val currentDirectory = mutableStateOf("")
 
     private val currentFolder: MutableState<File?> = mutableStateOf(null)
     var dialogsData = mutableStateListOf<UsersNameId>()
     val preparedDialogsData = mutableStateListOf<Dialog>()
     fun chooseFolder() {
         val direction = chooseDirection()
-        currentDirectory.value =
-            direction?.absolutePath ?: "Please, choose VK Archive folder"
+        currentDirectory.value = direction?.absolutePath ?: ""
         currentFolder.value = direction
     }
 
@@ -178,7 +177,7 @@ class VkArchiveData {
                                         File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
 
                                     when (attachment.attachmentType) {
-                                        in AttachmentType.PHOTO.translates -> {
+                                        in AttachmentType.PHOTO.translates.values -> {
                                             if (AttachmentType.PHOTO !in fileTypesToDownload) continue
                                             destination = File("${destination}/images").apply {
                                                 if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
@@ -190,15 +189,15 @@ class VkArchiveData {
                                             )
                                         }
 
-                                        in AttachmentType.VIDEO.translates,
-                                        in AttachmentType.GIFT.translates,
-                                        in AttachmentType.FILE.translates,
-                                        in AttachmentType.STICKER.translates,
-                                        in AttachmentType.URL.translates,
-                                        in AttachmentType.AUDIO.translates,
-                                        in AttachmentType.CALL.translates,
-                                        in AttachmentType.COMMENT.translates,
-                                in AttachmentType.POST.translates -> { continue }
+                                        in AttachmentType.VIDEO.translates.values,
+                                        in AttachmentType.GIFT.translates.values,
+                                        in AttachmentType.FILE.translates.values,
+                                        in AttachmentType.STICKER.translates.values,
+                                        in AttachmentType.URL.translates.values,
+                                        in AttachmentType.AUDIO.translates.values,
+                                        in AttachmentType.CALL.translates.values,
+                                        in AttachmentType.COMMENT.translates.values,
+                                        in AttachmentType.POST.translates.values -> { continue }
                                         else -> { continue }
                                     }
                                 } else break

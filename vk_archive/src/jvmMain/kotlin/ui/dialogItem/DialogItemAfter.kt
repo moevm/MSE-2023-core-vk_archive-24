@@ -10,12 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import utils.languages.StringResources
 
-@OptIn(ExperimentalUnitApi::class)
 @Composable
 fun DialogItemAfter(
     id: String,
@@ -31,11 +30,11 @@ fun DialogItemAfter(
     modifier: Modifier = Modifier
 ) {
     ContextMenuArea(items = {
-        listOf(ContextMenuItem("Select") {
+        listOf(ContextMenuItem(StringResources.select.updatableString()) {
             updateCheckboxState(id, !checkboxState.value)
-        }, ContextMenuItem("Select all") {
+        }, ContextMenuItem(StringResources.selectAll.updatableString()) {
             selectAllCheckboxes()
-        }, ContextMenuItem("Clear all") {
+        }, ContextMenuItem(StringResources.clearAll.updatableString()) {
             hideCheckboxes()
         })
     }) {
@@ -91,8 +90,8 @@ fun DialogItemAfter(
                 modifier = Modifier
                     .weight(18f)
             ) {
-                Text("Amount msg: $amountMessages")
-                Text("Amount attchm: $amountAttachments")
+                Text("${StringResources.amountMsg.updatableString()}: $amountMessages")
+                Text("${StringResources.amountAttchm.updatableString()}: $amountAttachments")
             }
         }
     }
