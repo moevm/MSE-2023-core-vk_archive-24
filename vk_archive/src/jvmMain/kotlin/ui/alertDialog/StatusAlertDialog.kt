@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import utils.languages.StringResources
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -32,7 +33,7 @@ fun StatusAlertDialog(
                         .fillMaxSize()
                         .padding(4.dp),
                     text = """$text 
-                    |Status: $status""".trimMargin(),
+                    |${StringResources.status.updatableString()}: $status""".trimMargin(),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -45,7 +46,7 @@ fun StatusAlertDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Button(onClick = onDismissRequest) {
-                        Text("Cancel")
+                        Text(StringResources.cancel.updatableString())
                     }
                 }
             }
