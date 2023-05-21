@@ -6,7 +6,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -17,12 +16,12 @@ import utils.languages.StringResources
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StatusAlertDialog(
-    dialogState: State<Boolean>,
-    text: String,
-    status: String,
+    alertDialogWithProcessState: AlertDialogWithProcessState,
     onDismissRequest: () -> Unit
 ) {
-    if (dialogState.value) {
+    if (alertDialogWithProcessState.isShow.value) {
+        val text = alertDialogWithProcessState.processText.value
+        val status = alertDialogWithProcessState.status.value
         AlertDialog(
             modifier = Modifier
                 .width(350.dp)

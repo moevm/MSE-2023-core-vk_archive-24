@@ -34,13 +34,9 @@ class VkArchiveData {
     fun getFilteredPreparedDialogs(filter: (Dialog) -> Boolean): List<Dialog> =
         preparedDialogsData.filter(filter)
 
-    fun parseAllDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job {
+    fun parseAllDialogs(uiUpdater: UIProcessUpdater? = null): Job {
         return CoroutineScope(Dispatchers.Default).launch {
-            initProcess()
+            uiUpdater?.initProcess()
             if (isActive) {
                 if (currentFolder.value != null) {
                     val listFiles =
@@ -50,7 +46,7 @@ class VkArchiveData {
 
                     for ((index, file) in listFiles.withIndex()) {
                         if (isActive) {
-                            updateProcessStatus("${(index + 1)}/${listFiles.size}")
+                            uiUpdater?.updateProcessStatus("${(index + 1)}/${listFiles.size}")
                             if (file.path.last().isDigit()) tempList.add(
                                 HtmlParser.parseDialogFolder(File(file.path))
                             )
@@ -62,24 +58,19 @@ class VkArchiveData {
                     }
                 }
             }
-            resetProcess()
+            uiUpdater?.finishProcess()
         }
     }
 
-    fun parseDialog(
-        id: String,
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job {
+    fun parseDialog(id: String, uiUpdater: UIProcessUpdater? = null): Job {
         return CoroutineScope(Dispatchers.Default).launch {
-            initProcess()
+            uiUpdater?.initProcess()
             if (isActive) {
                 if (currentFolder.value != null) {
                     val file = File("${currentFolder.value?.path}/messages/$id")
                     var dialog: Dialog? = null
                     if (isActive) {
-                        updateProcessStatus("1/1")
+                        uiUpdater?.updateProcessStatus("1/1")
                         if (file.path.last().isDigit())
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
@@ -88,7 +79,7 @@ class VkArchiveData {
                     }
                 }
             }
-            resetProcess()
+            uiUpdater?.finishProcess()
         }
     }
 
@@ -110,14 +101,13 @@ class VkArchiveData {
         return fileNames
     }
 
-    fun importPreparedDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job? {
+    fun importPreparedDialogs(uiUpdater: UIProcessUpdater? = null): Job? {
         if (currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
-                initProcess()
+                uiUpdater?.initProcess()
+                val updateProcessStatus =
+                    if (uiUpdater != null) uiUpdater::updateProcessStatus
+                    else null
                 preparedDialogsData.clear()
                 preparedDialogsData.addAll(
                     DialogJsonHelper.importAll(
@@ -126,26 +116,22 @@ class VkArchiveData {
                         checkActiveState = { isActive }
                     )
                 )
-                resetProcess()
+                uiUpdater?.finishProcess()
             }
         }
         return null
     }
 
-    fun exportPreparedDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job? {
+    fun exportPreparedDialogs(uiUpdater: UIProcessUpdater? = null): Job? {
         if (preparedDialogsData.isNotEmpty() && currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
-                initProcess()
+                uiUpdater?.initProcess()
                 val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
                 for ((i, dialog) in preparedDialogsData.withIndex()) {
-                    updateProcessStatus("$i/${preparedDialogsData.size}")
+                    uiUpdater?.updateProcessStatus("$i/${preparedDialogsData.size}")
                     DialogJsonHelper.export(File(path), dialog)
                 }
-                resetProcess()
+                uiUpdater?.finishProcess()
             }
         }
         return null
@@ -155,16 +141,14 @@ class VkArchiveData {
      * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
      */
     fun downloadAttachments(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit,
         dialogs: List<Dialog>,
         fileTypesToDownload: List<AttachmentType>,
+        uiUpdater: UIProcessUpdater? = null,
         amountMessages: Int? = null,
     ) : Job {
         return CoroutineScope(Dispatchers.IO).launch {
-            initProcess()
-            updateProcessStatus("0/${dialogs.size}")
+            uiUpdater?.initProcess()
+            uiUpdater?.updateProcessStatus("0/${dialogs.size}")
             for((index, dialog) in dialogs.withIndex()) {
                 if (isActive) {
                     val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
@@ -205,9 +189,9 @@ class VkArchiveData {
                         } else break
                     }
                 }
-                updateProcessStatus("${index + 1}/${dialogs.size}")
+                uiUpdater?.updateProcessStatus("${index + 1}/${dialogs.size}")
             }
-            resetProcess()
+            uiUpdater?.finishProcess()
         }
     }
 }

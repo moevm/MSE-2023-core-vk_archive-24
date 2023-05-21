@@ -8,7 +8,9 @@ import kotlinx.coroutines.Job
 import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
+import ui.alertDialog.AlertDialogWithProcessState
 import ui.alertDialog.DialogWithContentState
+import utils.SimpleAlertDialogProcessUpdater
 import utils.languages.StringResources
 
 class MainWindowViewModel {
@@ -16,9 +18,8 @@ class MainWindowViewModel {
 
     val isShowAboutDialog = mutableStateOf(false)
 
-    val isShowProcessAlertDialog = mutableStateOf(false)
-    val status = mutableStateOf("")
-    val processText = mutableStateOf("")
+    val alertDialogWithProcessState = AlertDialogWithProcessState()
+
     var processJob: Job? = null
 
     val dialogWithContentState: MutableState<DialogWithContentState?> =
@@ -58,70 +59,54 @@ class MainWindowViewModel {
         isShowAboutDialog.value = false
     }
 
-    private fun showProcessAlertDialog() {
-        isShowProcessAlertDialog.value = true
-    }
-
-    fun hideProcessAlertDialog() {
-        isShowProcessAlertDialog.value = false
-    }
-
     fun parseAllDialogs() {
         processJob = vkArchiveData.parseAllDialogs(
-            initProcess = {
-                showProcessAlertDialog()
-                status.value = ""
-                processText.value = "${StringResources.parsingDialogs.updatableString()}..."
-            },
-            updateProcessStatus = { process -> status.value = process },
-            resetProcess = {
-                hideProcessAlertDialog()
-                nameFilterForPreparedDialogs = ""
-            }
-        )
+            object : SimpleAlertDialogProcessUpdater(
+                alertDialogWithProcessState = alertDialogWithProcessState.also {
+                it.processText.value = "${StringResources.parsingDialogs.updatableString()}..."
+            }) {
+                override fun finishProcess() {
+                    super.finishProcess()
+                    nameFilterForPreparedDialogs = ""
+                }
+            })
     }
 
     fun parseDialog(id: String) {
-        processJob = vkArchiveData.parseDialog(
-            id,
-            initProcess = {
-                showProcessAlertDialog()
-                status.value = ""
-                processText.value = "${StringResources.parsingDialog.updatableString()}..."
-            },
-            updateProcessStatus = { process -> status.value = process },
-            resetProcess = {
-                hideProcessAlertDialog()
-                nameFilterForPreparedDialogs = ""
-            }
-        )
+        processJob =
+            vkArchiveData.parseDialog(id, object : SimpleAlertDialogProcessUpdater(
+                alertDialogWithProcessState = alertDialogWithProcessState.also {
+                    it.processText.value = "${StringResources.parsingDialog.updatableString()}..."
+                }
+            ) {
+                override fun finishProcess() {
+                    super.finishProcess()
+                    nameFilterForPreparedDialogs = ""
+                }
+            })
     }
 
     fun importPreparedDialogs() {
-        processJob = vkArchiveData.importPreparedDialogs(
-            initProcess = {
-                showProcessAlertDialog()
-                status.value = ""
-                processText.value = "${StringResources.importDialogs.updatableString()}..."
-            },
-            updateProcessStatus = { process -> status.value = process },
-            resetProcess = {
-                hideProcessAlertDialog()
+        processJob = vkArchiveData.importPreparedDialogs(object :
+            SimpleAlertDialogProcessUpdater(
+                alertDialogWithProcessState = alertDialogWithProcessState.also {
+                    it.processText.value = "${StringResources.importDialogs.updatableString()}..."
+                }
+            ) {
+            override fun finishProcess() {
+                super.finishProcess()
                 nameFilterForPreparedDialogs = ""
             }
-        )
+        })
     }
 
     fun exportPreparedDialogs() {
-        processJob = vkArchiveData.exportPreparedDialogs(
-            initProcess = {
-                showProcessAlertDialog()
-                status.value = ""
-                processText.value = "${StringResources.exportDialogs.updatableString()}..."
-            },
-            updateProcessStatus = { process -> status.value = process },
-            resetProcess = { hideProcessAlertDialog() }
-        )
+        processJob = vkArchiveData.exportPreparedDialogs(object :
+            SimpleAlertDialogProcessUpdater(
+                alertDialogWithProcessState = alertDialogWithProcessState.also {
+                    it.processText.value = "${StringResources.exportDialogs.updatableString()}..."
+                }
+            ) {})
     }
 
     fun downloadAttachments(selectedIds: Set<String>) {
@@ -130,15 +115,6 @@ class MainWindowViewModel {
                 hideDownloadDialog = { this.dialogWithContentState.value = null },
                 downloadAttachments = { selectedAttachments: Set<String> ->
                     processJob = vkArchiveData.downloadAttachments(
-                        initProcess = {
-                            showProcessAlertDialog()
-                            status.value = ""
-                            processText.value = "${StringResources.downloadAttachments.updatableString()}..."
-                        },
-                        updateProcessStatus = { process ->
-                            status.value = process
-                        },
-                        resetProcess = { hideProcessAlertDialog() },
                         dialogs = vkArchiveData.preparedDialogsData.filter {
                             selectedIds.contains(
                                 it.id
@@ -148,7 +124,12 @@ class MainWindowViewModel {
                             types.translates.values.find { type ->
                                 selectedAttachments.contains(type)
                             } != null
-                        }
+                        },
+                        uiUpdater = object : SimpleAlertDialogProcessUpdater(
+                            alertDialogWithProcessState = alertDialogWithProcessState.also {
+                                it.processText.value = "${StringResources.downloadAttachments.updatableString()}..."
+                            }
+                        ) {}
                     )
                 }
             )
