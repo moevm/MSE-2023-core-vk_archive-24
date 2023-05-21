@@ -6,14 +6,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -29,13 +32,17 @@ import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
 import utils.DefaultCheckboxListManager
 import utils.HideableCheckboxListManager
+import utils.languages.StringResources
+import utils.languages.StringResourcesEN
+import utils.languages.StringResourcesRU
 import windowManager.WindowsManager
 
 @Composable
 fun FrameWindowScope.MainWindow() {
-    val viewModel = MainWindowViewModel()
+    val viewModel = remember { MainWindowViewModel() }
 
-    val chosenFolderState = remember { viewModel.vkArchiveData.currentDirectory }
+    val chosenFolderState = viewModel.vkArchiveData.currentDirectory.value
+        .ifEmpty { StringResources.currentDirectoryPlaceholder.updatableString() }
     val dialogs = remember { viewModel.filteredDialogs }
     val preparedDialogs = remember { viewModel.filteredPreparedDialogs }
     val currentDialogId = remember { viewModel.currentDialogId }
@@ -45,9 +52,11 @@ fun FrameWindowScope.MainWindow() {
     MainWindowTopBar(
         onClickImportButton = { viewModel.importPreparedDialogs() },
         onClickExportButton = { viewModel.exportPreparedDialogs() },
-        onClickParseAllButton = { viewModel.parseAllDialogs() },
-        onClickDownloadAttachments = {
-            viewModel.downloadAttachments(preparedDialogsCheckboxManager.getSelectedIds())
+        onClickChangeLanguageToEnglishButton = {
+            StringResources.currentLanguage = StringResourcesEN
+        },
+        onClickChangeLanguageToRussianButton = {
+            StringResources.currentLanguage = StringResourcesRU
         },
         onClickAboutButton = { viewModel.showAboutAlertDialog() }
     )
@@ -82,6 +91,9 @@ fun FrameWindowScope.MainWindow() {
             ) {
                 ListOfDialogsBefore(
                     dialogs = dialogs,
+                    topbarActions = mapOf(
+                        StringResources.parseAll.updatableString() to { viewModel.parseAllDialogs() }
+                    ),
                     onDialogParsingClick = { id -> viewModel.parseDialog(id) },
                     updateDialogsFilter = { newFilter ->
                         viewModel.nameFilterForDialogs = newFilter
@@ -90,6 +102,10 @@ fun FrameWindowScope.MainWindow() {
                 ListOfDialogsAfter(
                     preparedDialogs = preparedDialogs,
                     hideableCheckboxListManager = preparedDialogsCheckboxManager,
+                    topbarActions = mapOf(
+                        StringResources.downloadAttachments.updatableString() to
+                                { viewModel.downloadAttachments(preparedDialogsCheckboxManager.getSelectedIds()) }
+                    ),
                     onPreparedDialogClick = { id ->
                         viewModel.currentDialogId.value = id
                     },
@@ -130,10 +146,9 @@ fun createDownloadDialog(
     hideDownloadDialog: () -> Unit,
     downloadAttachments: (attachmentTypes: Set<String>) -> Unit
 ) = DialogWithContentState(
-    title = "Select type of attachments",
+    title = StringResources.selectTypeOfAttachments.updatableString(),
     content = {
-        val items =
-            remember { AttachmentType.getDownloadable().map { it.first() } }
+        val items = remember { AttachmentType.getDownloadable(StringResources.currentLanguage.languageType) }
         val checkboxListManager = remember { DefaultCheckboxListManager() }
         Box {
             Box(
@@ -146,14 +161,14 @@ fun createDownloadDialog(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
-                    for (itemText in items) {
+                    for ((itemText, isSupported) in items) {
                         checkboxListManager.createCheckboxState(itemText)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clickable {
+                                .clickable(enabled = isSupported) {
                                     checkboxListManager.updateCheckboxState(
                                         itemText,
                                         !checkboxListManager.getCheckboxState(itemText).value
@@ -163,6 +178,7 @@ fun createDownloadDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(
+                                enabled = isSupported,
                                 checked = checkboxListManager.getCheckboxState(itemText).value,
                                 onCheckedChange = {
                                     checkboxListManager.updateCheckboxState(itemText, it)
@@ -186,10 +202,10 @@ fun createDownloadDialog(
                     downloadAttachments(checkboxListManager.getSelectedIds())
                     hideDownloadDialog()
                 }) {
-                    Text("Submit")
+                    Text(StringResources.submit.updatableString())
                 }
                 Button(onClick = { hideDownloadDialog() }) {
-                    Text("Cancel")
+                    Text(StringResources.cancel.updatableString())
                 }
             }
         }
@@ -197,10 +213,9 @@ fun createDownloadDialog(
     onDismissClick = { hideDownloadDialog() }
 )
 
-@OptIn(ExperimentalUnitApi::class)
 @Composable
 private fun ChosenFolderContent(
-    chosenFolderState: MutableState<String>,
+    chosenFolder: String,
     onChooseFolderClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -213,7 +228,7 @@ private fun ChosenFolderContent(
                 .align(Alignment.CenterStart)
         ) {
             Text(
-                text = "Chosen Folder: ",
+                text = "${StringResources.chosenFolder.updatableString()}: ",
                 fontSize = fontSize,
                 fontFamily = fontFamily
             )
@@ -221,7 +236,7 @@ private fun ChosenFolderContent(
             Text(
                 modifier = Modifier
                     .width(380.dp),
-                text = chosenFolderState.value,
+                text = chosenFolder,
                 fontSize = fontSize,
                 fontFamily = fontFamily,
                 fontWeight = FontWeight.Bold,
@@ -235,7 +250,7 @@ private fun ChosenFolderContent(
                 .align(Alignment.TopEnd),
             onClick = onChooseFolderClick
         ) {
-            Text("Choose Folder")
+            Text(StringResources.chooseFolder.updatableString())
         }
     }
 }
@@ -243,6 +258,7 @@ private fun ChosenFolderContent(
 @Composable
 private fun RowScope.ListOfDialogsBefore(
     dialogs: List<UsersNameId>,
+    topbarActions: Map<String, () -> Unit>,
     onDialogParsingClick: (String) -> Unit,
     updateDialogsFilter: (String) -> Unit
 ) {
@@ -259,20 +275,14 @@ private fun RowScope.ListOfDialogsBefore(
             .padding(3.dp)
     ) {
         Column {
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
-                value = nameFilterDialogs.value,
-                onValueChange = {
-                    nameFilterDialogs.value = it
-                    updateDialogsFilter(it)
+            DialogListTopbar(
+                nameFilterDialogs,
+                updateFilter = { filterValue ->
+                    nameFilterDialogs.value = filterValue
+                    updateDialogsFilter(filterValue)
                 },
-                singleLine = true,
-                label = { Text("Поиск по всем") },
-                placeholder = { Text("Здесь пока пусто...") }
+                topbarActions
             )
-            Divider(Modifier.fillMaxWidth())
             Box {
                 LazyColumn(
                     modifier = Modifier
@@ -302,6 +312,7 @@ private fun RowScope.ListOfDialogsBefore(
 private fun RowScope.ListOfDialogsAfter(
     preparedDialogs: List<Dialog>,
     hideableCheckboxListManager: HideableCheckboxListManager,
+    topbarActions: Map<String, () -> Unit>,
     onPreparedDialogClick: (String) -> Unit,
     updatePreparedDialogsFilter: (String) -> Unit
 ) {
@@ -318,20 +329,14 @@ private fun RowScope.ListOfDialogsAfter(
             .padding(3.dp)
     ) {
         Column {
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
-                value = nameFilterPreparedDialogs.value,
-                onValueChange = {
-                    nameFilterPreparedDialogs.value = it
-                    updatePreparedDialogsFilter(it)
+            DialogListTopbar(
+                nameFilterPreparedDialogs,
+                updateFilter = { filterValue ->
+                    nameFilterPreparedDialogs.value = filterValue
+                    updatePreparedDialogsFilter(filterValue)
                 },
-                singleLine = true,
-                label = { Text("Поиск по всем") },
-                placeholder = { Text("Здесь пока пусто...") }
+                topbarActions
             )
-            Divider(Modifier.fillMaxWidth())
             Box {
                 LazyColumn(
                     modifier = Modifier
@@ -361,6 +366,72 @@ private fun RowScope.ListOfDialogsAfter(
             }
         }
     }
+}
+
+@Composable
+private fun DialogListTopbar(
+    filterValueState: State<String>,
+    updateFilter: (String) -> Unit,
+    topbarActions: Map<String, () -> Unit>
+) {
+    var dropdownMenuExpandedState by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .weight(1f),
+            value = filterValueState.value,
+            onValueChange = { updateFilter(it) },
+            trailingIcon = {
+                IconButton(
+                    modifier = Modifier
+                        .pointerHoverIcon(PointerIcon.Default),
+                    onClick = { updateFilter("") }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null
+                    )
+                }
+            },
+            singleLine = true,
+            label = { Text(StringResources.searchAll.updatableString()) },
+            placeholder = { Text("${StringResources.nothingHere.updatableString()}...") }
+        )
+        Column {
+            Row(Modifier.fillMaxHeight()) {
+                Button(
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .fillMaxHeight()
+                        .padding(top = 16.dp, bottom = 8.dp)
+                    ,
+                    onClick = {
+                        dropdownMenuExpandedState = !dropdownMenuExpandedState
+                    }) {
+                    Text(StringResources.actions.updatableString())
+                }
+            }
+            DropdownMenu(
+                expanded = dropdownMenuExpandedState,
+                onDismissRequest = { dropdownMenuExpandedState = false }) {
+                for ((text, callback) in topbarActions) {
+                    DropdownMenuItem(onClick = {
+                        callback()
+                        dropdownMenuExpandedState = false
+                    }) {
+                        Text(text)
+                    }
+                }
+            }
+        }
+    }
+    Divider(Modifier.fillMaxWidth())
 }
 
 private fun LazyListScope.fillDialogBeforeList(
