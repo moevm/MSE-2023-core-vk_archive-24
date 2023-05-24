@@ -114,7 +114,7 @@ class MainWindowViewModel {
             createDownloadDialog(
                 hideDownloadDialog = { this.dialogWithContentState.value = null },
                 downloadAttachments = { selectedAttachments: Set<String> ->
-                    processJob = vkArchiveData.downloadAttachments(
+                    processJob = vkArchiveData.downloadAttachmentsToFiles(
                         dialogs = vkArchiveData.preparedDialogsData.filter {
                             selectedIds.contains(
                                 it.id

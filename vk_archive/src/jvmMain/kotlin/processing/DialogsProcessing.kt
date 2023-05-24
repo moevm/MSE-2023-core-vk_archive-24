@@ -2,9 +2,9 @@ package processing
 
 import model.AttachmentType
 import model.Dialog
+import utils.AttachmentSaver
 import utils.UIProcessUpdater
 import utils.downloadAttachment
-import java.io.File
 
 object DialogsProcessing {
     /**
@@ -13,7 +13,7 @@ object DialogsProcessing {
     fun downloadAttachments(
         dialogs: List<Dialog>,
         fileTypesToDownload: List<AttachmentType>,
-        currentFolder: File,
+        attachmentSaver: AttachmentSaver,
         amountMessages: Int? = null,
         uiUpdater: UIProcessUpdater? = null,
         isActive: () -> Boolean
@@ -28,20 +28,19 @@ object DialogsProcessing {
                         for (attachment in message.attachments) {
                             if (isActive()) {
                                 if (attachment.url == null) continue
-                                var destination =
-                                    File(currentFolder.absolutePath + "/parsed_attachments/${dialog.id}")
-
                                 when (attachment.attachmentType) {
                                     in AttachmentType.PHOTO.translates.values -> {
                                         if (AttachmentType.PHOTO !in fileTypesToDownload) continue
-                                        destination = File("${destination}/images").apply {
-                                            if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
-                                        }
+
                                         val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
-                                        downloadAttachment(
-                                            attachment.url,
-                                            File("$destination/${regexImage.find(attachment.url)?.value ?: continue}")
-                                        )
+                                        val os = regexImage.find(attachment.url)?.value?.let { photoName ->
+                                            attachmentSaver.createOutputStream(dialog.id, photoName)
+                                        } ?: continue
+
+                                        val photoIS = downloadAttachment(attachment.url)
+                                        photoIS?.copyTo(os)
+                                        photoIS?.close()
+                                        os.close()
                                     }
 
                                     in AttachmentType.VIDEO.translates.values,

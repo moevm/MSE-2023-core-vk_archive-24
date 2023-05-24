@@ -1,6 +1,5 @@
 package data
 
-import processing.DialogsProcessing
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +7,7 @@ import kotlinx.coroutines.*
 import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
+import processing.DialogsProcessing
 import utils.*
 import java.io.File
 
@@ -139,9 +139,9 @@ class VkArchiveData {
     }
 
     /**
-     * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
+     * пример использования: downloadAttachmentsToFiles(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
      */
-    fun downloadAttachments(
+    fun downloadAttachmentsToFiles(
         dialogs: List<Dialog>,
         fileTypesToDownload: List<AttachmentType>,
         uiUpdater: UIProcessUpdater? = null,
@@ -152,7 +152,7 @@ class VkArchiveData {
                 DialogsProcessing.downloadAttachments(
                     dialogs,
                     fileTypesToDownload,
-                    FileAttachmentSaver(currentFolder),
+                    FileAttachmentSaver(currentFolder.path),
                     amountMessages,
                     uiUpdater,
                     isActive = { isActive }

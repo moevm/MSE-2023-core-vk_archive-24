@@ -3,7 +3,7 @@ package utils
 import model.UsersNameId
 import java.awt.image.BufferedImage
 import java.io.File
-import java.io.FileNotFoundException
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
@@ -35,33 +35,18 @@ fun findFolder(startDir: File, folderName: String): File? {
 }
 
 //загрузка и сохранение файла по ссылке
-fun downloadAttachment(imageUrl: String, filePath: File) {
-    if (filePath.exists()) {
-        println("File $filePath already exists")
-        return
-    }
-
-    try {
-        val url = URL(imageUrl)
+fun downloadAttachment(fileUrl: String): InputStream? {
+        val url = URL(fileUrl)
         val connection = url.openConnection()
         connection.connect()
 
         val responseCode = (connection as HttpURLConnection).responseCode
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            println("Failed to download $imageUrl: response code $responseCode")
-            return
+            println("Failed to download $fileUrl: response code $responseCode")
+            return null
         }
 
-        val inputStream = connection.getInputStream()
-        val outputStream = filePath.outputStream()
-        inputStream.copyTo(outputStream)
-        outputStream.close()
-        inputStream.close()
-    }
-    catch (e: FileNotFoundException){
-        println("File not found")
-        return
-    }
+        return connection.getInputStream()
 }
 
 //Создание копии изображения в меньшем разрешении
