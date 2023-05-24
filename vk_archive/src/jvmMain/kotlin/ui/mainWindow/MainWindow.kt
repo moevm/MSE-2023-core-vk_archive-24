@@ -32,6 +32,7 @@ import ui.dialogItem.DialogItemAfter
 import ui.dialogItem.DialogItemBefore
 import utils.DefaultCheckboxListManager
 import utils.HideableCheckboxListManager
+import utils.SimpleAlertDialogProcessUpdater
 import utils.languages.StringResources
 import utils.languages.StringResourcesEN
 import utils.languages.StringResourcesRU
@@ -122,8 +123,6 @@ fun FrameWindowScope.MainWindow() {
 private fun initAlertDialogs(viewModel: MainWindowViewModel) {
     val aboutDialogState: MutableState<Boolean> =
         remember { viewModel.isShowAboutDialog }
-    val currentProcessAlertDialogState =
-        remember { viewModel.isShowProcessAlertDialog }
 
     AboutDialog(
         dialogState = aboutDialogState,
@@ -131,13 +130,14 @@ private fun initAlertDialogs(viewModel: MainWindowViewModel) {
     )
 
     StatusAlertDialog(
-        dialogState = currentProcessAlertDialogState,
-        text = viewModel.processText.value,
-        status = viewModel.status.value,
-        onDismissRequest = {
-            viewModel.processJob?.cancel()
-            viewModel.hideProcessAlertDialog()
-        })
+        alertDialogWithProcessState = viewModel.alertDialogWithProcessState,
+        (object : SimpleAlertDialogProcessUpdater(viewModel.alertDialogWithProcessState) {
+            override fun finishProcess() {
+                super.finishProcess()
+                viewModel.processJob?.cancel()
+            }
+        })::finishProcess
+    )
 
     DialogWithContent(dialogWithContentState = viewModel.dialogWithContentState)
 }

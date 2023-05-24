@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
+import processing.DialogsProcessing
 import utils.*
 import java.io.File
 
@@ -34,13 +35,9 @@ class VkArchiveData {
     fun getFilteredPreparedDialogs(filter: (Dialog) -> Boolean): List<Dialog> =
         preparedDialogsData.filter(filter)
 
-    fun parseAllDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job {
+    fun parseAllDialogs(uiUpdater: UIProcessUpdater? = null): Job {
         return CoroutineScope(Dispatchers.Default).launch {
-            initProcess()
+            uiUpdater?.initProcess()
             if (isActive) {
                 if (currentFolder.value != null) {
                     val listFiles =
@@ -50,7 +47,7 @@ class VkArchiveData {
 
                     for ((index, file) in listFiles.withIndex()) {
                         if (isActive) {
-                            updateProcessStatus("${(index + 1)}/${listFiles.size}")
+                            uiUpdater?.updateProcessStatus("${(index + 1)}/${listFiles.size}")
                             if (file.path.last().isDigit()) tempList.add(
                                 HtmlParser.parseDialogFolder(File(file.path))
                             )
@@ -62,24 +59,19 @@ class VkArchiveData {
                     }
                 }
             }
-            resetProcess()
+            uiUpdater?.finishProcess()
         }
     }
 
-    fun parseDialog(
-        id: String,
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job {
+    fun parseDialog(id: String, uiUpdater: UIProcessUpdater? = null): Job {
         return CoroutineScope(Dispatchers.Default).launch {
-            initProcess()
+            uiUpdater?.initProcess()
             if (isActive) {
                 if (currentFolder.value != null) {
                     val file = File("${currentFolder.value?.path}/messages/$id")
                     var dialog: Dialog? = null
                     if (isActive) {
-                        updateProcessStatus("1/1")
+                        uiUpdater?.updateProcessStatus("1/1")
                         if (file.path.last().isDigit())
                             dialog = HtmlParser.parseDialogFolder(File(file.path))
                     }
@@ -88,7 +80,7 @@ class VkArchiveData {
                     }
                 }
             }
-            resetProcess()
+            uiUpdater?.finishProcess()
         }
     }
 
@@ -110,14 +102,13 @@ class VkArchiveData {
         return fileNames
     }
 
-    fun importPreparedDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job? {
+    fun importPreparedDialogs(uiUpdater: UIProcessUpdater? = null): Job? {
         if (currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
-                initProcess()
+                uiUpdater?.initProcess()
+                val updateProcessStatus =
+                    if (uiUpdater != null) uiUpdater::updateProcessStatus
+                    else null
                 preparedDialogsData.clear()
                 preparedDialogsData.addAll(
                     DialogJsonHelper.importAll(
@@ -126,88 +117,47 @@ class VkArchiveData {
                         checkActiveState = { isActive }
                     )
                 )
-                resetProcess()
+                uiUpdater?.finishProcess()
             }
         }
         return null
     }
 
-    fun exportPreparedDialogs(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit
-    ): Job? {
+    fun exportPreparedDialogs(uiUpdater: UIProcessUpdater? = null): Job? {
         if (preparedDialogsData.isNotEmpty() && currentFolder.value != null) {
             return CoroutineScope(Dispatchers.IO).launch {
-                initProcess()
+                uiUpdater?.initProcess()
                 val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
                 for ((i, dialog) in preparedDialogsData.withIndex()) {
-                    updateProcessStatus("$i/${preparedDialogsData.size}")
+                    uiUpdater?.updateProcessStatus("$i/${preparedDialogsData.size}")
                     DialogJsonHelper.export(File(path), dialog)
                 }
-                resetProcess()
+                uiUpdater?.finishProcess()
             }
         }
         return null
     }
 
     /**
-     * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
+     * пример использования: downloadAttachmentsToFiles(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
      */
-    fun downloadAttachments(
-        initProcess: () -> Unit,
-        updateProcessStatus: (String) -> Unit,
-        resetProcess: () -> Unit,
+    fun downloadAttachmentsToFiles(
         dialogs: List<Dialog>,
         fileTypesToDownload: List<AttachmentType>,
+        uiUpdater: UIProcessUpdater? = null,
         amountMessages: Int? = null,
     ) : Job {
         return CoroutineScope(Dispatchers.IO).launch {
-            initProcess()
-            updateProcessStatus("0/${dialogs.size}")
-            for((index, dialog) in dialogs.withIndex()) {
-                if (isActive) {
-                    val messagesToProcess = dialog.messages.take(amountMessages ?: dialog.messages.size)
-                    for (message in messagesToProcess) {
-                        if (isActive) {
-                            for (attachment in message.attachments) {
-                                if (isActive) {
-                                    if (attachment.url == null) continue
-                                    var destination =
-                                        File(currentFolder.value!!.absolutePath + "/parsed_attachments/${dialog.id}")
-
-                                    when (attachment.attachmentType) {
-                                        in AttachmentType.PHOTO.translates.values -> {
-                                            if (AttachmentType.PHOTO !in fileTypesToDownload) continue
-                                            destination = File("${destination}/images").apply {
-                                                if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
-                                            }
-                                            val regexImage = Regex("""([\w-]+\.(?:jpg|png|jpeg|gif))""")
-                                            downloadAttachment(
-                                                attachment.url,
-                                                File("$destination/${dialog.id}_${regexImage.find(attachment.url)?.value ?: continue}")
-                                            )
-                                        }
-
-                                        in AttachmentType.VIDEO.translates.values,
-                                        in AttachmentType.GIFT.translates.values,
-                                        in AttachmentType.FILE.translates.values,
-                                        in AttachmentType.STICKER.translates.values,
-                                        in AttachmentType.URL.translates.values,
-                                        in AttachmentType.AUDIO.translates.values,
-                                        in AttachmentType.CALL.translates.values,
-                                        in AttachmentType.COMMENT.translates.values,
-                                        in AttachmentType.POST.translates.values -> { continue }
-                                        else -> { continue }
-                                    }
-                                } else break
-                            }
-                        } else break
-                    }
-                }
-                updateProcessStatus("${index + 1}/${dialogs.size}")
+            currentFolder.value?.let { currentFolder ->
+                DialogsProcessing.downloadAttachments(
+                    dialogs,
+                    fileTypesToDownload,
+                    FileAttachmentSaver(currentFolder.path),
+                    amountMessages,
+                    uiUpdater,
+                    isActive = { isActive }
+                )
             }
-            resetProcess()
         }
     }
 }
