@@ -12,6 +12,7 @@ import javax.swing.JFileChooser
 
 // TODO: Удалить временное решение после добавления готового
 
+/**Открывает диалоговое окно выбора директории. Можно выбрать нужную директорию, после чего функция возвращает объект типа File, представляющий выбранную директорию. Если директория не была выбрана, функция возвращает null.**/
 fun chooseDirection(): File? {
     val fileChooser = JFileChooser("/").apply {
         fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
@@ -34,7 +35,7 @@ fun findFolder(startDir: File, folderName: String): File? {
     return null
 }
 
-//загрузка и сохранение файла по ссылке
+/**Загружает файл изображения по заданному URL-адресу и сохраняет его в указанном месте в файловой системе (если изображение уже есть, перезапись не произойдет)**/
 fun downloadAttachment(imageUrl: String, filePath: File) {
     if (filePath.exists()) {
         println("File $filePath already exists")
@@ -97,7 +98,9 @@ fun goThroughDialogue(dialogueFolder: File): Int {
     return counter
 }
 
-// список id и имен
+/**
+ * Принимает на вход путь к директории и возвращает список объектов типа UsersNameId (id, name) или null, если файл messages0.html не найден в указанном пути
+ * **/
 fun getUsersNameIdList(directoryPath: String): List<UsersNameId>? {
     val messagesDirectory = File(directoryPath, "messages")
     val indexFile = File(messagesDirectory, "index-messages.html")
