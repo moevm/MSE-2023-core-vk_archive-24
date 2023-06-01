@@ -1,12 +1,10 @@
 package utils
 
-import model.UsersNameId
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.Charset
 import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 
@@ -95,23 +93,4 @@ fun goThroughDialogue(dialogueFolder: File): Int {
         counter++
     }
     return counter
-}
-
-// список id и имен
-fun getUsersNameIdList(directoryPath: String): List<UsersNameId>? {
-    val messagesDirectory = File(directoryPath, "messages")
-    val indexFile = File(messagesDirectory, "index-messages.html")
-    val usersNameIdList = mutableListOf<UsersNameId>()
-
-    if (indexFile.exists()) {
-        val htmlText = indexFile.readText(charset = Charset.forName("windows-1251"))
-        val regex = """<div class="message-peer--id">\s+<a href="(-?\d+)/messages0.html">([^<]+)</a>""".toRegex()
-        val matches = regex.findAll(htmlText)
-
-        for (match in matches) {
-            val (id, name) = match.destructured
-            usersNameIdList.add(UsersNameId(id, name))
-        }
-    } else return null
-    return usersNameIdList
 }
