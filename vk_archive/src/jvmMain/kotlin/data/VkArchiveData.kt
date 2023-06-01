@@ -52,7 +52,7 @@ class VkArchiveData {
                         if (isActive) {
                             updateProcessStatus("${(index + 1)}/${listFiles.size}")
                             if (file.path.last().isDigit()) tempList.add(
-                                HtmlParser.parseDialogFolder(File(file.path))
+                                VkDialogParser.parseDialogFromFolder(File(file.path))
                             )
                         } else break
                     }
@@ -81,7 +81,7 @@ class VkArchiveData {
                     if (isActive) {
                         updateProcessStatus("1/1")
                         if (file.path.last().isDigit())
-                            dialog = HtmlParser.parseDialogFolder(File(file.path))
+                            dialog = VkDialogParser.parseDialogFromFolder(File(file.path))
                     }
                     if (isActive && dialog != null && !preparedDialogsData.contains(dialog)) {
                         preparedDialogsData.add(dialog)

@@ -12,34 +12,95 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 
-object HtmlParser {
+object VkDialogParser {
 
     /**
      * file - директория с файлами сообщений
      */
-    fun parseDialogFolder(file: File): Dialog{
-        val dialog = Dialog();
-        dialog.id = file.name
-        val tmp = file.listFiles();
-        tmp.sortWith { o1, o2 ->
+    fun parseDialogFromFolder(file: File): Dialog{
+        val dialog = Dialog()
+        dialog.id = file.name;
+
+        val filesInFolder = file.listFiles();
+        filesInFolder.sortWith { o1, o2 ->
             val value1 = o1!!.name.filter { it.isDigit() }.toInt();
             val value2 = o2!!.name.filter { it.isDigit() }.toInt();
             value1 - value2;
         }
-        val tmpMessages = mutableListOf<Message>()
-        tmp.forEach {
-            if (!it.name.endsWith(".html")) throw RuntimeException("Not html file")
-            val document: Document = try {
-                Jsoup.parse(it, "Windows-1251")
-            } catch (e: IOException) {
-                throw RuntimeException(e)
-            }
-            parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
-                dialog.name = name;
-            };
+        filesInFolder.forEach {
+            val tmpMessages = parseMessagesFromFile(dialog,it)
+            addMessagesToDialog(dialog,tmpMessages);
         }
-        dialog.messages = tmpMessages;
         return dialog;
+    }
+
+    private fun parseMessagesFromFile(dialog:Dialog,file:File): List<Message>{
+        if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
+        val document: Document = try {
+            Jsoup.parse(file, "Windows-1251")
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+        if (dialog.name == ""){
+            setName(dialog,document)
+        }
+        return pushMessagesFromDOM(document);
+    }
+
+    /**
+     * dialogId - id диалога
+     * htmlString - список строчек. Текст строк представляет собой текст html-файла, содержащего сообщения из диалога
+     */
+    public fun parseDialogFromArray(htmlStrings: List<String>,dialogId: String): Dialog {
+        val dialog = Dialog()
+        dialog.id = dialogId;
+
+        for (html in htmlStrings) {
+            val tmpMessages = parseMessagesFromString(dialog,html)
+            addMessagesToDialog(dialog,tmpMessages);
+        }
+        return dialog
+    }
+
+    private fun parseMessagesFromString(dialog:Dialog,htmlString: String):List<Message>{
+        val document: Document = try {
+            Jsoup.parse(htmlString)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+        if (dialog.name == "")
+            setName(dialog,document);
+        return pushMessagesFromDOM(document)
+    }
+
+    /**
+     * dialogId - id диалога
+     * charsetName - кодировка
+     * baseUri - URL, для разрешения относительных ссылок
+     */
+    public fun parseVkMessagesFromStream(
+        dialogId: String,
+        inputStream: InputStream,
+        charsetName: String = "UTF-8",
+        baseUri: String="-"
+    ): Dialog {
+        val dialog = Dialog();
+        dialog.id = dialogId;
+
+        val tmpMessages = parseMessagesFromStream(dialog,inputStream,charsetName,baseUri)
+        addMessagesToDialog(dialog,tmpMessages)
+        return dialog
+    }
+
+    private fun parseMessagesFromStream(dialog:Dialog, inputStream:InputStream,charsetName: String = "UTF-8", baseUri: String="-"):List<Message>{
+        val document: Document = try {
+            Jsoup.parse(inputStream, charsetName, baseUri);
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+        if (dialog.name == "")
+            setName(dialog,document);
+        return pushMessagesFromDOM(document);
     }
 
     private fun parseMonth(month:String):Int{
@@ -73,61 +134,19 @@ object HtmlParser {
         );
     }
 
-    /**
-     * dialogId - id диалога
-     * htmlString - список строчек. Текст строк представляет собой текст html-файла, содержащего сообщения из диалога
-     */
-    public fun parseVkMessagesFromStrings(dialogId: String, htmlStrings: List<String>): Dialog {
-        val dialog = Dialog();
-        dialog.id = dialogId;
-        val tmpMessages = mutableListOf<Message>()
-        for (html in htmlStrings) {
-            val document: Document = try {
-                Jsoup.parse(html)
-            } catch (e: IOException) {
-                throw RuntimeException(e)
-            }
-            parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
-                dialog.name = name;
-            };
-        }
-        dialog.messages = tmpMessages;
-        return dialog
+    private fun addMessagesToDialog(dialog:Dialog,messages: List<Message>){
+        dialog.messages.addAll(messages);
     }
 
-    /**
-     * dialogId - id диалога
-     * charsetName - кодировка
-     * baseUri - URL, для разрешения относительных ссылок
-     */
-    public fun parseVkMessagesFromStream(
-        dialogId: String,
-        inputStream: InputStream,
-        charsetName: String = "UTF-8",
-        baseUri: String="-"
-    ): Dialog {
-        val dialog = Dialog();
-        dialog.id = dialogId;
-        val tmpMessages = mutableListOf<Message>()
-        val document: Document = try {
-            Jsoup.parse(inputStream, charsetName, baseUri);
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        }
-        parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
-            dialog.name = name;
-        };
-        dialog.messages = tmpMessages;
-        return dialog
+    private fun setName(dialog: Dialog, document: Document){
+        val dialogHeaderBlock = document.getElementsByClass("ui_crumb");
+        val div = dialogHeaderBlock.eq(2);
+        val name = div.first()!!.text();
+        dialog.name = name;
     }
 
-    private fun parseVkMessages(document: Document, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (name:String)->Unit){
-        if (listenerFlag){
-            val dialogHeaderBlock = document.getElementsByClass("ui_crumb");
-            val div = dialogHeaderBlock.eq(2);
-            val name = div.first()!!.text();
-            listener(name.toString())
-        }
+    private fun pushMessagesFromDOM(document: Document):List<Message>{
+        val messages: MutableList<Message> = mutableListOf();
         val divs: Elements = document.getElementsByClass("item")
         // div in divs
         for (i in 0 until divs.size) {
@@ -177,7 +196,8 @@ object HtmlParser {
                 attachments.add(attachment)
             }
             message.attachments = attachments;
-            messageArray.add(message);
+            messages.add(message);
         }
+        return messages;
     }
 }
