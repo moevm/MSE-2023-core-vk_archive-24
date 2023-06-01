@@ -182,10 +182,10 @@ class VkArchiveData {
                                             destination = File("${destination}/images").apply {
                                                 if (!exists() && !mkdirs()) throw IllegalStateException("Failed to create directory: $this")
                                             }
-                                            val regexImage = Regex("""/([\w-]+\.(?:jpg|png|jpeg|gif))""")
+                                            val regexImage = Regex("""([\w-]+\.(?:jpg|png|jpeg|gif))""")
                                             downloadAttachment(
                                                 attachment.url,
-                                                File("$destination/${regexImage.find(attachment.url)?.value ?: continue}")
+                                                File("$destination/${dialog.id}_${regexImage.find(attachment.url)?.value ?: continue}")
                                             )
                                         }
 
