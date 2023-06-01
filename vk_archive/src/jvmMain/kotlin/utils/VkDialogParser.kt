@@ -7,7 +7,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -15,49 +14,16 @@ import java.util.*
 object VkDialogParser {
 
     /**
-     * file - директория с файлами сообщений
-     */
-    fun parseDialogFromFolder(file: File): Dialog{
-        val dialog = Dialog()
-        dialog.id = file.name;
-
-        val filesInFolder = file.listFiles();
-        filesInFolder.sortWith { o1, o2 ->
-            val value1 = o1!!.name.filter { it.isDigit() }.toInt();
-            val value2 = o2!!.name.filter { it.isDigit() }.toInt();
-            value1 - value2;
-        }
-        filesInFolder.forEach {
-            val tmpMessages = parseMessagesFromFile(dialog,it)
-            addMessagesToDialog(dialog,tmpMessages);
-        }
-        return dialog;
-    }
-
-    private fun parseMessagesFromFile(dialog:Dialog,file:File): List<Message>{
-        if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
-        val document: Document = try {
-            Jsoup.parse(file, "Windows-1251")
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        }
-        if (dialog.name == ""){
-            setName(dialog,document)
-        }
-        return pushMessagesFromDOM(document);
-    }
-
-    /**
      * dialogId - id диалога
      * htmlString - список строчек. Текст строк представляет собой текст html-файла, содержащего сообщения из диалога
      */
-    public fun parseDialogFromArray(htmlStrings: List<String>,dialogId: String): Dialog {
+    fun parseDialogFromArray(htmlStrings: List<String>,dialogId: String): Dialog {
         val dialog = Dialog()
-        dialog.id = dialogId;
+        dialog.id = dialogId
 
         for (html in htmlStrings) {
             val tmpMessages = parseMessagesFromString(dialog,html)
-            addMessagesToDialog(dialog,tmpMessages);
+            addMessagesToDialog(dialog,tmpMessages)
         }
         return dialog
     }
@@ -69,7 +35,7 @@ object VkDialogParser {
             throw RuntimeException(e)
         }
         if (dialog.name == "")
-            setName(dialog,document);
+            setName(dialog,document)
         return pushMessagesFromDOM(document)
     }
 
@@ -78,14 +44,14 @@ object VkDialogParser {
      * charsetName - кодировка
      * baseUri - URL, для разрешения относительных ссылок
      */
-    public fun parseVkMessagesFromStream(
+    fun parseVkMessagesFromStream(
         dialogId: String,
         inputStream: InputStream,
         charsetName: String = "UTF-8",
         baseUri: String="-"
     ): Dialog {
-        val dialog = Dialog();
-        dialog.id = dialogId;
+        val dialog = Dialog()
+        dialog.id = dialogId
 
         val tmpMessages = parseMessagesFromStream(dialog,inputStream,charsetName,baseUri)
         addMessagesToDialog(dialog,tmpMessages)
@@ -94,31 +60,31 @@ object VkDialogParser {
 
     private fun parseMessagesFromStream(dialog:Dialog, inputStream:InputStream,charsetName: String = "UTF-8", baseUri: String="-"):List<Message>{
         val document: Document = try {
-            Jsoup.parse(inputStream, charsetName, baseUri);
+            Jsoup.parse(inputStream, charsetName, baseUri)
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
         if (dialog.name == "")
-            setName(dialog,document);
-        return pushMessagesFromDOM(document);
+            setName(dialog,document)
+        return pushMessagesFromDOM(document)
     }
 
     private fun parseMonth(month:String):Int{
         when (month){
-            "янв"-> return 1;
-            "фев"-> return 2;
-            "мар"-> return 3;
-            "апр"-> return 4;
-            "мая"-> return 5;
-            "июн"-> return 6;
-            "июл"-> return 7;
-            "авг"-> return 8;
-            "сен"-> return 9;
-            "окт"-> return 10;
-            "ноя"-> return 11;
-            "дек"-> return 12;
+            "янв"-> return 1
+            "фев"-> return 2
+            "мар"-> return 3
+            "апр"-> return 4
+            "мая"-> return 5
+            "июн"-> return 6
+            "июл"-> return 7
+            "авг"-> return 8
+            "сен"-> return 9
+            "окт"-> return 10
+            "ноя"-> return 11
+            "дек"-> return 12
         }
-        return 0;
+        return 0
     }
 
     private fun parseDate(dateStr: String): Date {
@@ -131,27 +97,27 @@ object VkDialogParser {
             timeArray[0].toInt(),
             timeArray[1].toInt(),
             timeArray[2].toInt()
-        );
+        )
     }
 
-    private fun addMessagesToDialog(dialog:Dialog,messages: List<Message>){
-        dialog.messages.addAll(messages);
+    fun addMessagesToDialog(dialog:Dialog,messages: List<Message>){
+        dialog.messages.addAll(messages)
     }
 
-    private fun setName(dialog: Dialog, document: Document){
-        val dialogHeaderBlock = document.getElementsByClass("ui_crumb");
-        val div = dialogHeaderBlock.eq(2);
-        val name = div.first()!!.text();
-        dialog.name = name;
+    fun setName(dialog: Dialog, document: Document){
+        val dialogHeaderBlock = document.getElementsByClass("ui_crumb")
+        val div = dialogHeaderBlock.eq(2)
+        val name = div.first()!!.text()
+        dialog.name = name
     }
 
-    private fun pushMessagesFromDOM(document: Document):List<Message>{
-        val messages: MutableList<Message> = mutableListOf();
+    fun pushMessagesFromDOM(document: Document):List<Message>{
+        val messages: MutableList<Message> = mutableListOf()
         val divs: Elements = document.getElementsByClass("item")
         // div in divs
         for (i in 0 until divs.size) {
-            val div = divs[i];
-            val message = Message();
+            val div = divs[i]
+            val message = Message()
             val messageBlock: Element? = div.getElementsByClass("message").first()
             val attachmentsBlock: Elements = messageBlock!!.getElementsByClass("attachment")
             val headerBlock: Elements = div.getElementsByClass("message__header")
@@ -159,45 +125,45 @@ object VkDialogParser {
             val nameAndTime: List<String> = headerBlock.first()?.text()?.trim()?.split(", ")!!
             if (headerBlock.first()?.children()?.size!! >1){
                 val editBlock: Element? = headerBlock.first()?.child(1)
-                val editTime = editBlock?.attr("title");
-                message.editTime = editTime;
+                val editTime = editBlock?.attr("title")
+                message.editTime = editTime
             }
             val name = nameAndTime[0]
             val timeRaw = nameAndTime[1]
-            val urlElem = (headerBlock.first())?.getElementsByTag("a");
-            val url = urlElem?.first()?.attr("href");
-            val id = url?.substring(15,url.length);
+            val urlElem = (headerBlock.first())?.getElementsByTag("a")
+            val url = urlElem?.first()?.attr("href")
+            val id = url?.substring(15,url.length)
 
             message.authorId = id ?: "myId"
-            message.authorName = name;
+            message.authorName = name
             message.messageTime = timeRaw
 
-            var content = "";
+            var content = ""
             val contentNodes = messageBlock
                 .getElementsByIndexEquals(1)
                 .first()
-                ?.childNodes();
+                ?.childNodes()
             for (node in contentNodes!!){
                 if (node.nodeName()=="div")
-                    break;
-                content+= if (node.nodeName()== "br") " /n " else node.toString().trim();
+                    break
+                content+= if (node.nodeName()== "br") " /n " else node.toString().trim()
             }
-            if (content.isNotEmpty()) message.message = content;
+            if (content.isNotEmpty()) message.message = content
 
-            val attachments = arrayListOf<Attachment>();
+            val attachments = arrayListOf<Attachment>()
             for (element in attachmentsBlock){
-                var url:String? = null;
-                val attachmentLink: Elements = element.getElementsByClass("attachment__link");
+                var url:String? = null
+                val attachmentLink: Elements = element.getElementsByClass("attachment__link")
                 if (attachmentLink.size>0){
                     url = attachmentLink.first()?.text()?.trim()
                 }
-                val attachmentType = element.getElementsByClass("attachment__description").first()?.text()?.trim();
+                val attachmentType = element.getElementsByClass("attachment__description").first()?.text()?.trim()
                 val attachment = Attachment(attachmentType!!, url)
                 attachments.add(attachment)
             }
-            message.attachments = attachments;
-            messages.add(message);
+            message.attachments = attachments
+            messages.add(message)
         }
-        return messages;
+        return messages
     }
 }
