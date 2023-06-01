@@ -7,7 +7,10 @@ import kotlinx.coroutines.*
 import model.AttachmentType
 import model.Dialog
 import model.UsersNameId
-import utils.*
+import utils.VkDialogParserFileProxy
+import utils.chooseDirection
+import utils.downloadAttachment
+import utils.goThroughDialogue
 import java.io.File
 
 class VkArchiveData {
@@ -24,7 +27,7 @@ class VkArchiveData {
 
     fun prepareDialogsList() {
         dialogsData.clear()
-        val listNameId = getUsersNameIdList(currentFolder.value.toString())
+        val listNameId = VkDialogParserFileProxy.getUsersNameIdList(currentFolder.value.toString())
         dialogsData.addAll(listNameId?: emptyList())
     }
 
@@ -52,7 +55,7 @@ class VkArchiveData {
                         if (isActive) {
                             updateProcessStatus("${(index + 1)}/${listFiles.size}")
                             if (file.path.last().isDigit()) tempList.add(
-                                HtmlParser.parseDialogFolder(File(file.path))
+                                VkDialogParserFileProxy.parseDialogFromFolder(File(file.path))
                             )
                         } else break
                     }
@@ -81,7 +84,7 @@ class VkArchiveData {
                     if (isActive) {
                         updateProcessStatus("1/1")
                         if (file.path.last().isDigit())
-                            dialog = HtmlParser.parseDialogFolder(File(file.path))
+                            dialog = VkDialogParserFileProxy.parseDialogFromFolder(File(file.path))
                     }
                     if (isActive && dialog != null && !preparedDialogsData.contains(dialog)) {
                         preparedDialogsData.add(dialog)
@@ -120,7 +123,7 @@ class VkArchiveData {
                 initProcess()
                 preparedDialogsData.clear()
                 preparedDialogsData.addAll(
-                    DialogJsonHelper.importAll(
+                    VkDialogParserFileProxy.importAll(
                         File("${currentFolder.value!!.absolutePath}/parsed_messages"),
                         updateProcessStatus,
                         checkActiveState = { isActive }
@@ -143,7 +146,7 @@ class VkArchiveData {
                 val path = "${currentFolder.value!!.absolutePath}/parsed_messages"
                 for ((i, dialog) in preparedDialogsData.withIndex()) {
                     updateProcessStatus("$i/${preparedDialogsData.size}")
-                    DialogJsonHelper.export(File(path), dialog)
+                    VkDialogParserFileProxy.export(File(path), dialog)
                 }
                 resetProcess()
             }
