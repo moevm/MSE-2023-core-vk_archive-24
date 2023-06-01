@@ -9,6 +9,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.util.*
 
 object HtmlParser {
@@ -27,7 +28,13 @@ object HtmlParser {
         }
         val tmpMessages = mutableListOf<Message>()
         tmp.forEach {
-            parseVkMessagesFromHTML(it,tmpMessages,dialog.name.isBlank()) { name ->
+            if (!it.name.endsWith(".html")) throw RuntimeException("Not html file")
+            val document: Document = try {
+                Jsoup.parse(it, "Windows-1251")
+            } catch (e: IOException) {
+                throw RuntimeException(e)
+            }
+            parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
                 dialog.name = name;
             };
         }
@@ -66,13 +73,55 @@ object HtmlParser {
         );
     }
 
-    private fun parseVkMessagesFromHTML(file: File, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (name:String)->Unit){
-        if (!file.name.endsWith(".html")) throw RuntimeException("Not html file")
+    /**
+     * dialogId - id диалога
+     * htmlString - список строчек. Текст строк представляет собой текст html-файла, содержащего сообщения из диалога
+     */
+    public fun parseVkMessagesFromStrings(dialogId: String, htmlStrings: List<String>): Dialog {
+        val dialog = Dialog();
+        dialog.id = dialogId;
+        val tmpMessages = mutableListOf<Message>()
+        for (html in htmlStrings) {
+            val document: Document = try {
+                Jsoup.parse(html)
+            } catch (e: IOException) {
+                throw RuntimeException(e)
+            }
+            parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
+                dialog.name = name;
+            };
+        }
+        dialog.messages = tmpMessages;
+        return dialog
+    }
+
+    /**
+     * dialogId - id диалога
+     * charsetName - кодировка
+     * baseUri - URL, для разрешения относительных ссылок
+     */
+    public fun parseVkMessagesFromStream(
+        dialogId: String,
+        inputStream: InputStream,
+        charsetName: String = "UTF-8",
+        baseUri: String="-"
+    ): Dialog {
+        val dialog = Dialog();
+        dialog.id = dialogId;
+        val tmpMessages = mutableListOf<Message>()
         val document: Document = try {
-            Jsoup.parse(file, "Windows-1251")
+            Jsoup.parse(inputStream, charsetName, baseUri);
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
+        parseVkMessages(document, tmpMessages, dialog.name.isBlank()) { name ->
+            dialog.name = name;
+        };
+        dialog.messages = tmpMessages;
+        return dialog
+    }
+
+    private fun parseVkMessages(document: Document, messageArray: MutableList<Message>,listenerFlag:Boolean, listener: (name:String)->Unit){
         if (listenerFlag){
             val dialogHeaderBlock = document.getElementsByClass("ui_crumb");
             val div = dialogHeaderBlock.eq(2);
