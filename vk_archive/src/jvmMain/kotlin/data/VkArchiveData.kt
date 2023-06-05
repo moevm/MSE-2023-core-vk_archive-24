@@ -34,6 +34,7 @@ class VkArchiveData {
     fun getFilteredPreparedDialogs(filter: (Dialog) -> Boolean): List<Dialog> =
         preparedDialogsData.filter(filter)
 
+    /**Парсинг всех диалогов**/
     fun parseAllDialogs(
         initProcess: () -> Unit,
         updateProcessStatus: (String) -> Unit,
@@ -66,6 +67,7 @@ class VkArchiveData {
         }
     }
 
+    /**Принимает на вход id диалога (id) и три функции: initProcess, updateProcessStatus и resetProcess. Она создает новый корутин и запускает парсинг диалога в отдельном потоке. В начале вызывает initProcess для инициализации процесса, затем проверяет, активен ли корутин. Если корутин активен, то функция продолжает выполняться. В конце функция вызывает resetProcess для завершения процесса.**/
     fun parseDialog(
         id: String,
         initProcess: () -> Unit,
@@ -110,6 +112,7 @@ class VkArchiveData {
         return fileNames
     }
 
+    /**Импортирует подготовленные диалоги **/
     fun importPreparedDialogs(
         initProcess: () -> Unit,
         updateProcessStatus: (String) -> Unit,
@@ -132,6 +135,7 @@ class VkArchiveData {
         return null
     }
 
+    /**Экспортирует подготовленные диалоги в формате JSON в указанную папку**/
     fun exportPreparedDialogs(
         initProcess: () -> Unit,
         updateProcessStatus: (String) -> Unit,
@@ -152,7 +156,9 @@ class VkArchiveData {
     }
 
     /**
-     * пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
+     * Принимает  на вход список диалогов, типы вложений для загрузки, количество сообщений для обработки и функции для обновления прогресса загрузки. Запускает отдельный поток, в котором происходит обработка диалогов и сообщений. Для каждого вложения функция проверяет его тип, и если это изображение, то оно загружается в папку "parsed_attachments/images" с названием, взятым из URL. В конце работы выполняются функции обновления статуса прогресса загрузки и сброса процесса.
+     *
+     * Пример использования: downloadAttachments(dialog, listOf(AttachmentType.PHOTO, AttachmentType.VIDEO))
      */
     fun downloadAttachments(
         initProcess: () -> Unit,
